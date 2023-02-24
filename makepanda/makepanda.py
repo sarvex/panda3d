@@ -1478,7 +1478,7 @@ def CompileCxx(obj,src,opts):
 
         # Ignore unused variables in NDEBUG builds, often used in asserts.
         if optlevel == 4:
-            cmd += " -Wno-unused-variable"
+            cmd += " -Wno-unused-variable -Wno-unused-but-set-variable"
 
         if src.endswith(".c"):
             cmd += ' ' + CFLAGS
