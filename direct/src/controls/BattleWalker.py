@@ -49,13 +49,16 @@ class BattleWalker(GravityWalker.GravityWalker):
         # Slide speed is a scaled down version of forward speed
         self.slideSpeed=(slideLeft and -self.avatarControlForwardSpeed or
                          slideRight and self.avatarControlForwardSpeed) * 0.5
-        self.rotationSpeed=not (slideLeft or slideRight) and (
-                (turnLeft and self.avatarControlRotateSpeed) or
-                (turnRight and -self.avatarControlRotateSpeed))
+        self.rotationSpeed = (
+            not slideLeft
+            and not slideRight
+            and (
+                (turnLeft and self.avatarControlRotateSpeed)
+                or (turnRight and -self.avatarControlRotateSpeed)
+            )
+        )
 
-        debugRunning = inputState.isSet("debugRunning")
-
-        if debugRunning:
+        if debugRunning := inputState.isSet("debugRunning"):
             self.speed*=base.debugRunningMultiplier
             self.slideSpeed*=base.debugRunningMultiplier
             self.rotationSpeed*=1.25

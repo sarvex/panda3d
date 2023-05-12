@@ -15,7 +15,7 @@ class Particles(ParticleSystem):
     def __init__(self, name=None, poolSize=1024):
         """__init__(name, poolSize)"""
 
-        if (name == None):
+        if name is None:
             self.name = 'particles-%d' % Particles.id
             Particles.id += 1
         else:
@@ -85,14 +85,14 @@ class Particles(ParticleSystem):
         if (self.factory):
             self.factory = None
         self.factoryType = type
-        if (type == "PointParticleFactory"):
-            self.factory = PointParticleFactory.PointParticleFactory()
-        elif (type == "ZSpinParticleFactory"):
-            self.factory = ZSpinParticleFactory.ZSpinParticleFactory()
-        elif (type == "OrientedParticleFactory"):
+        if type == "OrientedParticleFactory":
             self.factory = OrientedParticleFactory.OrientedParticleFactory()
+        elif type == "PointParticleFactory":
+            self.factory = PointParticleFactory.PointParticleFactory()
+        elif type == "ZSpinParticleFactory":
+            self.factory = ZSpinParticleFactory.ZSpinParticleFactory()
         else:
-            print("unknown factory type: %s" % type)
+            print(f"unknown factory type: {type}")
             return None
         self.factory.setLifespanBase(0.5)
         ParticleSystem.ParticleSystem.setFactory(self, self.factory)
@@ -104,12 +104,7 @@ class Particles(ParticleSystem):
         if (self.renderer):
             self.renderer = None
         self.rendererType = type
-        if (type == "PointParticleRenderer"):
-            self.renderer = PointParticleRenderer.PointParticleRenderer()
-            self.renderer.setPointSize(1.0)
-        elif (type == "LineParticleRenderer"):
-            self.renderer = LineParticleRenderer.LineParticleRenderer()
-        elif (type == "GeomParticleRenderer"):
+        if type == "GeomParticleRenderer":
             self.renderer = GeomParticleRenderer.GeomParticleRenderer()
             npath = NodePath('default-geom')
             # This was moved here because we do not want to download
@@ -117,9 +112,14 @@ class Particles(ParticleSystem):
             from direct.directtools import DirectSelection
             bbox = DirectSelection.DirectBoundingBox(npath)
             self.renderer.setGeomNode(bbox.lines.node())
-        elif (type == "SparkleParticleRenderer"):
+        elif type == "LineParticleRenderer":
+            self.renderer = LineParticleRenderer.LineParticleRenderer()
+        elif type == "PointParticleRenderer":
+            self.renderer = PointParticleRenderer.PointParticleRenderer()
+            self.renderer.setPointSize(1.0)
+        elif type == "SparkleParticleRenderer":
             self.renderer = SparkleParticleRenderer.SparkleParticleRenderer()
-        elif (type == "SpriteParticleRenderer"):
+        elif type == "SpriteParticleRenderer":
             self.renderer = SpriteParticleRenderer.SpriteParticleRenderer()
             if (self.renderer.getSourceType() ==
                 SpriteParticleRenderer.SpriteParticleRenderer.STTexture):
@@ -131,7 +131,7 @@ class Particles(ParticleSystem):
                 # See sourceFileName and sourceNodeName in SpriteParticleRenderer-extensions.py
                 self.renderer.setTextureFromNode()
         else:
-            print("unknown renderer type: %s" % type)
+            print(f"unknown renderer type: {type}")
             return None
         ParticleSystem.ParticleSystem.setRenderer(self, self.renderer)
 
@@ -142,27 +142,27 @@ class Particles(ParticleSystem):
         if (self.emitter):
             self.emitter = None
         self.emitterType = type
-        if (type == "BoxEmitter"):
+        if type == "BoxEmitter":
             self.emitter = BoxEmitter.BoxEmitter()
-        elif (type == "DiscEmitter"):
+        elif type == "DiscEmitter":
             self.emitter = DiscEmitter.DiscEmitter()
-        elif (type == "LineEmitter"):
+        elif type == "LineEmitter":
             self.emitter = LineEmitter.LineEmitter()
-        elif (type == "PointEmitter"):
+        elif type == "PointEmitter":
             self.emitter = PointEmitter.PointEmitter()
-        elif (type == "RectangleEmitter"):
+        elif type == "RectangleEmitter":
             self.emitter = RectangleEmitter.RectangleEmitter()
-        elif (type == "RingEmitter"):
+        elif type == "RingEmitter":
             self.emitter = RingEmitter.RingEmitter()
-        elif (type == "SphereSurfaceEmitter"):
+        elif type == "SphereSurfaceEmitter":
             self.emitter = SphereSurfaceEmitter.SphereSurfaceEmitter()
-        elif (type == "SphereVolumeEmitter"):
+        elif type == "SphereVolumeEmitter":
             self.emitter = SphereVolumeEmitter.SphereVolumeEmitter()
             self.emitter.setRadius(1.0)
-        elif (type == "TangentRingEmitter"):
+        elif type == "TangentRingEmitter":
             self.emitter = TangentRingEmitter.TangentRingEmitter()
         else:
-            print("unknown emitter type: %s" % type)
+            print(f"unknown emitter type: {type}")
             return None
         ParticleSystem.ParticleSystem.setEmitter(self, self.emitter)
 
@@ -175,7 +175,7 @@ class Particles(ParticleSystem):
 
     def removeForce(self, force):
         """removeForce(force)"""
-        if (force == None):
+        if force is None:
             self.notify.warning('removeForce() - force == None!')
             return
         if (force.isLinear()):

@@ -55,7 +55,7 @@ class EggCacher:
 
     def scanPath(self, eggs, path):
         if not os.path.exists(path):
-            print("No such file or directory: " + path)
+            print(f"No such file or directory: {path}")
             return
         if os.path.isdir(path):
             for f in os.listdir(path):
@@ -80,9 +80,7 @@ class EggCacher:
         return eggs
 
     def processFiles(self, files):
-        total = 0
-        for (path, size) in files:
-            total += size
+        total = sum(size for path, size in files)
         progress = 0
         for (path, size) in files:
             fn = Filename.fromOsSpecific(path)

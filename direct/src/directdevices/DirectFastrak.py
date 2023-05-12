@@ -25,7 +25,7 @@ class DirectFastrak(DirectObject):
             base.direct.deviceManager = DirectDeviceManager()
 
         # Set name
-        self.name = 'Fastrak-' + repr(DirectFastrak.fastrakCount)
+        self.name = f'Fastrak-{repr(DirectFastrak.fastrakCount)}'
         self.deviceNo = DirectFastrak.fastrakCount
         DirectFastrak.fastrakCount += 1
 
@@ -44,10 +44,10 @@ class DirectFastrak(DirectObject):
         # Initialize tracker
         self.tracker = base.direct.deviceManager.createTracker(self.device)
         # Update task
-        taskMgr.add(self.updateTask, self.name + '-updateTask')
+        taskMgr.add(self.updateTask, f'{self.name}-updateTask')
 
     def disable(self):
-        taskMgr.remove(self.name + '-updateTask')
+        taskMgr.remove(f'{self.name}-updateTask')
 
     def destroy(self):
         self.disable()

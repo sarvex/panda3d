@@ -48,22 +48,18 @@ def comment(code):
 
     empty_line = False
     for line in code.splitlines(False):
-        line = line.strip('\t\n /')
-        if line:
+        if line := line.strip('\t\n /'):
             if empty_line:
                 # New paragraph.
                 comment += '\n\n'
                 empty_line = False
             elif comment:
                 comment += '\n'
-            comment += '/// ' + line
+            comment += f'/// {line}'
         else:
             empty_line = True
 
-    if comment:
-        return comment
-    else:
-        return ''
+    return comment if comment else ''
 
 
 def block_comment(code):
@@ -72,11 +68,7 @@ def block_comment(code):
     if not code.startswith('///<') and '@verbatim' not in code:
         code = code.replace('<', '\\<').replace('>', '\\>')
 
-    if not code or code[0] != '/':
-        # Not really a comment; get rid of it.
-        return ""
-
-    return code
+    return "" if not code or code[0] != '/' else code
 
 
 def translateFunctionName(name):
@@ -104,7 +96,7 @@ def translateTypeName(name, mangle=True):
     first_char = mangle
 
     for chr in name:
-        if (chr == '_' or chr == ' ') and mangle:
+        if chr in ['_', ' '] and mangle:
             next_cap = True
         elif chr in bad_chars:
             if not mangle:
@@ -122,7 +114,7 @@ def translateTypeName(name, mangle=True):
 def translated_type_name(type, scoped=True):
     while interrogate_type_is_wrapped(type):
         if interrogate_type_is_const(type):
-            return 'const ' + translated_type_name(interrogate_type_wrapped_type(type))
+            return f'const {translated_type_name(interrogate_type_wrapped_type(type))}'
         else:
             type = interrogate_type_wrapped_type(type)
 
@@ -150,7 +142,7 @@ def translated_type_name(type, scoped=True):
         typename = translateTypeName(typename)
 
     if scoped and interrogate_type_is_nested(type):
-        return translated_type_name(interrogate_type_outer_class(type)) + '::' + typename
+        return f'{translated_type_name(interrogate_type_outer_class(type))}::{typename}'
     else:
         return typename
 
@@ -181,16 +173,19 @@ def processFunction(handle, function, isConstructor = False):
             print(block_comment(interrogate_wrapper_comment(wrapper)), file=handle)
 
         if not isConstructor:
-            if interrogate_function_is_method(function):
-                if not interrogate_wrapper_number_of_parameters(wrapper) > 0 or not interrogate_wrapper_parameter_is_this(wrapper, 0):
-                    print("static", end=' ', file=handle)
+            if interrogate_function_is_method(function) and (
+                interrogate_wrapper_number_of_parameters(wrapper) <= 0
+                or not interrogate_wrapper_parameter_is_this(wrapper, 0)
+            ):
+                print("static", end=' ', file=handle)
 
             if interrogate_wrapper_has_return_value(wrapper):
                 print(translated_type_name(interrogate_wrapper_return_type(wrapper)), end=' ', file=handle)
-            else:
-                pass#print >>handle, "void",
-
-            print(translateFunctionName(interrogate_function_name(function)) + "(", end=' ', file=handle)
+            print(
+                f"{translateFunctionName(interrogate_function_name(function))}(",
+                end=' ',
+                file=handle,
+            )
         else:
             print("__init__(", end=' ', file=handle)
 
@@ -217,8 +212,9 @@ def processType(handle, type):
     if interrogate_type_is_enum(type):
         print("enum %s {" % typename, file=handle)
         for i_value in range(interrogate_type_number_of_enum_values(type)):
-            docstring = comment(interrogate_type_enum_value_comment(type, i_value))
-            if docstring:
+            if docstring := comment(
+                interrogate_type_enum_value_comment(type, i_value)
+            ):
                 print(docstring, file=handle)
             print(interrogate_type_enum_value_name(type, i_value), "=", interrogate_type_enum_value(type, i_value), ",", file=handle)
 
@@ -226,7 +222,7 @@ def processType(handle, type):
         wrapped_type = interrogate_type_wrapped_type(type)
         if interrogate_type_is_global(wrapped_type):
             wrapped_type_name = translated_type_name(wrapped_type)
-            print("typedef %s %s;" % (wrapped_type_name, typename), file=handle)
+            print(f"typedef {wrapped_type_name} {typename};", file=handle)
         return
     else:
         if interrogate_type_is_struct(type):
@@ -236,10 +232,10 @@ def processType(handle, type):
         elif interrogate_type_is_union(type):
             classtype = "union"
         else:
-            print("I don't know what type %s is" % interrogate_type_true_name(type))
+            print(f"I don't know what type {interrogate_type_true_name(type)} is")
             return
 
-        if len(derivations) > 0:
+        if derivations:
             print("%s %s : public %s {" % (classtype, typename, ", public ".join(derivations)), file=handle)
         else:
             print("%s %s {" % (classtype, typename), file=handle)
@@ -264,7 +260,7 @@ def processType(handle, type):
 
 
 def processModule(handle, package):
-    print("Processing module %s" % (package))
+    print(f"Processing module {package}")
     print("namespace %s {" % package, file=handle)
 
     if package != "core":
@@ -275,57 +271,53 @@ def processModule(handle, package):
 
         if interrogate_type_has_module_name(type):
             module_name = interrogate_type_module_name(type)
-            if "panda3d." + package == module_name:
+            if f"panda3d.{package}" == module_name:
                 processType(handle, type)
         else:
             typename = interrogate_type_name(type)
-            print("Type %s has no module name" % typename)
+            print(f"Type {typename} has no module name")
 
     for i_func in range(interrogate_number_of_global_functions()):
         func = interrogate_get_global_function(i_func)
 
         if interrogate_function_has_module_name(func):
             module_name = interrogate_function_module_name(func)
-            if "panda3d." + package == module_name:
+            if f"panda3d.{package}" == module_name:
                 processFunction(handle, func)
         else:
             funcname = interrogate_function_name(func)
-            print("Function %s has no module name" % funcname)
+            print(f"Function {funcname} has no module name")
 
     print("}", file=handle)
 
 
 if __name__ == "__main__":
-    handle = open("pandadoc.hpp", "w")
+    with open("pandadoc.hpp", "w") as handle:
+        if mainpage := MAINPAGE.strip():
+            print("/**\n * " + mainpage.replace('\n', '\n * ') + '\n */', file=handle)
 
-    mainpage = MAINPAGE.strip()
-    if mainpage:
-        print("/**\n * " + mainpage.replace('\n', '\n * ') + '\n */', file=handle)
+        print(comment("Panda3D modules that are implemented in C++."), file=handle)
+        print("namespace panda3d {", file=handle)
 
-    print(comment("Panda3D modules that are implemented in C++."), file=handle)
-    print("namespace panda3d {", file=handle)
+        # Determine the path to the interrogatedb files
+        pandac = os.path.dirname(pandac.__file__)
+        interrogate_add_search_directory(os.path.join(pandac, "..", "..", "etc"))
+        interrogate_add_search_directory(os.path.join(pandac, "input"))
 
-    # Determine the path to the interrogatedb files
-    pandac = os.path.dirname(pandac.__file__)
-    interrogate_add_search_directory(os.path.join(pandac, "..", "..", "etc"))
-    interrogate_add_search_directory(os.path.join(pandac, "input"))
+        import panda3d.core
+        processModule(handle, "core")
 
-    import panda3d.core
-    processModule(handle, "core")
+        # Determine the suffix for the extension modules.
+        import _imp
+        ext_suffix = _imp.extension_suffixes()[0]
 
-    # Determine the suffix for the extension modules.
-    import _imp
-    ext_suffix = _imp.extension_suffixes()[0]
+        for lib in os.listdir(os.path.dirname(panda3d.__file__)):
+            if lib.endswith(ext_suffix) and not lib.startswith('core.'):
+                module_name = lib[:-len(ext_suffix)]
+                __import__(f"panda3d.{module_name}")
+                processModule(handle, module_name)
 
-    for lib in os.listdir(os.path.dirname(panda3d.__file__)):
-        if lib.endswith(ext_suffix) and not lib.startswith('core.'):
-            module_name = lib[:-len(ext_suffix)]
-            __import__("panda3d." + module_name)
-            processModule(handle, module_name)
-
-    print("}", file=handle)
-    handle.close()
-
+        print("}", file=handle)
     print("Wrote output to pandadoc.hpp.  You can now run:")
     print()
     print("  doxygen built/direct/directscripts/Doxyfile.python")

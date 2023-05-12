@@ -53,7 +53,7 @@ class Logger:
         self.resetStartTime()
         t = time.localtime(self.__startTime)
         st = time.strftime("%m-%d-%Y-%H-%M-%S", t)
-        logFileName = self.__logFileName + "." + st
+        logFileName = f"{self.__logFileName}.{st}"
         self.__logFile = open(logFileName, "w")
 
     def __closeLogFile(self):

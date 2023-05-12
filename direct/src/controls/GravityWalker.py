@@ -106,8 +106,6 @@ class GravityWalker(DirectObject.DirectObject):
 
     def setAvatar(self, avatar):
         self.avatar = avatar
-        if avatar is not None:
-            pass # setup the avatar
 
     def setupRay(self, bitmask, floorOffset, reach):
         assert self.notify.debugStateCall(self)
@@ -343,8 +341,9 @@ class GravityWalker(DirectObject.DirectObject):
                 base.shadowTrav.removeCollider(self.cRayNodePath)
 
     def getCollisionsActive(self):
-        assert self.debugPrint("getCollisionsActive() returning=%s"%(
-            self.collisionsActive,))
+        assert self.debugPrint(
+            f"getCollisionsActive() returning={self.collisionsActive}"
+        )
         return self.collisionsActive
 
     def placeOnFloor(self):
@@ -390,10 +389,9 @@ class GravityWalker(DirectObject.DirectObject):
         if self.jumpDelayTask:
             self.jumpDelayTask.remove()
         self.mayJump = 0
-        self.jumpDelayTask=taskMgr.doMethodLater(
-            delay,
-            self.setMayJump,
-            "jumpDelay-%s"%id(self))
+        self.jumpDelayTask = taskMgr.doMethodLater(
+            delay, self.setMayJump, f"jumpDelay-{id(self)}"
+        )
 
     def addBlastForce(self, vector):
         self.lifter.addVelocity(vector.length())
@@ -431,10 +429,13 @@ class GravityWalker(DirectObject.DirectObject):
         jump = inputState.isSet("jump")
 
         # Check for Auto-Run
-        if 'localAvatar' in __builtins__:
-            if base.localAvatar and base.localAvatar.getAutoRun():
-                forward = 1
-                reverse = 0
+        if (
+            'localAvatar' in __builtins__
+            and base.localAvatar
+            and base.localAvatar.getAutoRun()
+        ):
+            forward = 1
+            reverse = 0
 
         # Determine what the speeds are based on the buttons:
         self.speed=(forward and self.avatarControlForwardSpeed or
@@ -448,16 +449,20 @@ class GravityWalker(DirectObject.DirectObject):
                          reverse and slideRight and self.avatarControlReverseSpeed*0.75 or
                          slideLeft and -self.avatarControlForwardSpeed*0.75 or
                          slideRight and self.avatarControlForwardSpeed*0.75)
-        self.rotationSpeed=not (slideLeft or slideRight) and (
-                (turnLeft and self.avatarControlRotateSpeed) or
-                (turnRight and -self.avatarControlRotateSpeed))
+        self.rotationSpeed = (
+            not slideLeft
+            and not slideRight
+            and (
+                (turnLeft and self.avatarControlRotateSpeed)
+                or (turnRight and -self.avatarControlRotateSpeed)
+            )
+        )
 
         if self.speed and self.slideSpeed:
             self.speed *= GravityWalker.DiagonalFactor
             self.slideSpeed *= GravityWalker.DiagonalFactor
 
-        debugRunning = inputState.isSet("debugRunning")
-        if debugRunning:
+        if debugRunning := inputState.isSet("debugRunning"):
             self.speed*=base.debugRunningMultiplier
             self.slideSpeed*=base.debugRunningMultiplier
             self.rotationSpeed*=1.25
@@ -559,9 +564,8 @@ class GravityWalker(DirectObject.DirectObject):
         else:
             velocity = self.__oldPosDelta*(1.0/self.__oldDt)
         self.priorParent = Vec3(velocity)
-        if __debug__:
-            if self.wantDebugIndicator:
-                onScreenDebug.add("priorParent", self.priorParent.pPrintValues())
+        if __debug__ and self.wantDebugIndicator:
+            onScreenDebug.add("priorParent", self.priorParent.pPrintValues())
 
     def reset(self):
         assert self.notify.debugStateCall(self)
@@ -585,7 +589,7 @@ class GravityWalker(DirectObject.DirectObject):
         if self.controlsTask:
             self.controlsTask.remove()
         # spawn the new task
-        taskName = "AvatarControls-%s"%(id(self),)
+        taskName = f"AvatarControls-{id(self)}"
         self.controlsTask = taskMgr.add(self.handleAvatarControls, taskName, 25)
 
         self.isAirborne = 0
@@ -596,7 +600,9 @@ class GravityWalker(DirectObject.DirectObject):
                 self.indicatorTask.remove()
             self.indicatorTask = taskMgr.add(
                 self.avatarPhysicsIndicator,
-                "AvatarControlsIndicator-%s"%(id(self),), 35)
+                f"AvatarControlsIndicator-{id(self)}",
+                35,
+            )
 
     def disableAvatarControls(self):
         """
@@ -628,8 +634,7 @@ class GravityWalker(DirectObject.DirectObject):
     if __debug__:
         def debugPrint(self, message):
             """for debugging"""
-            return self.notify.debug(
-                    str(id(self))+' '+message)
+            return self.notify.debug(f'{id(self)} {message}')
 
     # There are sometimes issues if the collision ray height is
     # so tall that it collides with multiple levels of floors.

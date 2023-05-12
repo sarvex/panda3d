@@ -172,10 +172,7 @@ def getScreenXY(nodePath):
     # What percentage of the distance across the screen is this?
     percentX = (nearX - base.direct.dr.left)/base.direct.dr.nearWidth
     percentY = (nearY - base.direct.dr.bottom)/base.direct.dr.nearHeight
-    # Map this percentage to the same -1 to 1 space as the mouse
-    screenXY = Vec3((2 * percentX) - 1.0, nearVec[1], (2 * percentY) - 1.0)
-    # Return the resulting value
-    return screenXY
+    return Vec3((2 * percentX) - 1.0, nearVec[1], (2 * percentY) - 1.0)
 
 
 def getCrankAngle(center):

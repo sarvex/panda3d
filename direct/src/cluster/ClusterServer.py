@@ -130,7 +130,7 @@ class ClusterServer(DirectObject.DirectObject):
             self.objectMappings[name] = object
             self.objectHasColor[name] = hasColor
         else:
-            self.notify.debug('attempt to add duplicate named object: '+name)
+            self.notify.debug(f'attempt to add duplicate named object: {name}')
 
     def removeObjectMapping(self, name):
         if name in self.objectMappings:
@@ -138,11 +138,9 @@ class ClusterServer(DirectObject.DirectObject):
 
     def redoSortedPriorities(self):
 
-        self.sortedControlMappings = []
-        for key in self.objectMappings:
-            self.sortedControlMappings.append([self.controlPriorities[key],
-                                               key])
-
+        self.sortedControlMappings = [
+            [self.controlPriorities[key], key] for key in self.objectMappings
+        ]
         self.sortedControlMappings.sort()
 
     def addControlMapping(self, objectName, controlledName, offset = None,
@@ -155,7 +153,7 @@ class ClusterServer(DirectObject.DirectObject):
             self.controlPriorities[objectName] = priority
             self.redoSortedPriorities()
         else:
-            self.notify.debug('attempt to add duplicate controlled object: ' + objectName)
+            self.notify.debug(f'attempt to add duplicate controlled object: {objectName}')
 
     def setControlMappingOffset(self, objectName, offset):
         if objectName in self.controlMappings:
@@ -175,8 +173,8 @@ class ClusterServer(DirectObject.DirectObject):
         #print "running control object task"
         for pair in self.sortedControlPriorities:
             object = pair[1]
-            name   = self.controlMappings[object]
             if object in self.objectMappings:
+                name   = self.controlMappings[object]
                 self.moveObject(self.objectMappings[object],name,self.controlOffsets[object],
                                 self.objectHasColor[object])
 
@@ -189,15 +187,12 @@ class ClusterServer(DirectObject.DirectObject):
         self.cw.send(datagram,self.lastConnection)
 
     def moveObject(self, nodePath, object, offset, hasColor):
-        self.notify.debug('moving object '+object)
+        self.notify.debug(f'moving object {object}')
         #print "moving object",object
         xyz = nodePath.getPos(render) + offset
         hpr = nodePath.getHpr(render)
         scale = nodePath.getScale(render)
-        if hasColor:
-            color = nodePath.getColor()
-        else:
-            color = [1,1,1,1]
+        color = nodePath.getColor() if hasColor else [1,1,1,1]
         hidden = nodePath.isHidden()
         datagram = self.msgHandler.makeNamedObjectMovementDatagram(xyz,hpr,scale,color,hidden,object)
         self.cw.send(datagram, self.lastConnection)
@@ -324,7 +319,7 @@ class ClusterServer(DirectObject.DirectObject):
             else:
                 self.objectMappings[name].show()
         else:
-            self.notify.debug("recieved unknown named object command: "+name)
+            self.notify.debug(f"recieved unknown named object command: {name}")
 
     def handleMessageQueue(self):
         #print(self.messageQueue)

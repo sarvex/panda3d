@@ -54,11 +54,9 @@ class TwoDWalker(GravityWalker):
 
     def jumpPressed(self):
         """This function should be called from TwoDDrive when the jump key is pressed."""
-        if self.lifter.isOnGround():
-            if self.isAirborne == 0:
-                if self.mayJump:
-                    # The jump button is down and we're close enough to the ground to jump.
-                    self.lifter.addVelocity(self.avatarControlJumpForce)
-                    messenger.send("jumpStart")
-                    self.isAirborne = 1
-                    assert self.debugPrint("isAirborne 1 due to jump")
+        if self.lifter.isOnGround() and self.isAirborne == 0 and self.mayJump:
+            # The jump button is down and we're close enough to the ground to jump.
+            self.lifter.addVelocity(self.avatarControlJumpForce)
+            messenger.send("jumpStart")
+            self.isAirborne = 1
+            assert self.debugPrint("isAirborne 1 due to jump")

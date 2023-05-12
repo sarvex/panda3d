@@ -69,8 +69,6 @@ class NonPhysicsWalker(DirectObject.DirectObject):
 
     def setAvatar(self, avatar):
         self.avatar = avatar
-        if avatar is not None:
-            pass # setup the avatar
 
     def setAirborneHeightFunc(self, getAirborneHeight):
         self.getAirborneHeight = getAirborneHeight
@@ -163,7 +161,7 @@ class NonPhysicsWalker(DirectObject.DirectObject):
         self.cSphereNodePath.setTag(key, value)
 
     def setCollisionsActive(self, active = 1):
-        assert self.debugPrint("setCollisionsActive(active%s)"%(active,))
+        assert self.debugPrint(f"setCollisionsActive(active{active})")
         if self.collisionsActive != active:
             self.collisionsActive = active
             if active:
@@ -310,7 +308,7 @@ class NonPhysicsWalker(DirectObject.DirectObject):
         assert self.debugPrint("enableAvatarControls")
         assert self.collisionsActive
 
-        taskName = "AvatarControls-%s"%(id(self),)
+        taskName = f"AvatarControls-{id(self)}"
         # remove any old
         taskMgr.remove(taskName)
         # spawn the new task
@@ -321,7 +319,7 @@ class NonPhysicsWalker(DirectObject.DirectObject):
         Ignore the arrow keys, etc.
         """
         assert self.debugPrint("disableAvatarControls")
-        taskName = "AvatarControls-%s"%(id(self),)
+        taskName = f"AvatarControls-{id(self)}"
         taskMgr.remove(taskName)
 
     def flushEventHandlers(self):
@@ -332,5 +330,4 @@ class NonPhysicsWalker(DirectObject.DirectObject):
     if __debug__:
         def debugPrint(self, message):
             """for debugging"""
-            return self.notify.debug(
-                    str(id(self))+' '+message)
+            return self.notify.debug(f'{id(self)} {message}')

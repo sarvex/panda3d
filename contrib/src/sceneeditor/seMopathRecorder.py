@@ -110,11 +110,12 @@ class MopathRecorder(AppShell, DirectObject):
         self.tangentLines.drawTo(0,0,0)
         self.tangentLines.create()
         # Active node path dictionary
-        self.nodePathDict = {}
-        self.nodePathDict['marker'] = self.playbackMarker
-        self.nodePathDict['camera'] = camera
-        self.nodePathDict['widget'] = SEditor.widget
-        self.nodePathDict['mopathRecorderTempCS'] = self.tempCS
+        self.nodePathDict = {
+            'marker': self.playbackMarker,
+            'camera': camera,
+            'widget': SEditor.widget,
+            'mopathRecorderTempCS': self.tempCS,
+        }
         self.nodePathNames = ['marker', 'camera', 'selected']
         # ID of selected object
         self.manipulandumId = None
@@ -126,7 +127,7 @@ class MopathRecorder(AppShell, DirectObject):
         self.postPoints = []
         self.pointSetDict = {}
         self.pointSetCount = 0
-        self.pointSetName = self.name + '-ps-' + repr(self.pointSetCount)
+        self.pointSetName = f'{self.name}-ps-{repr(self.pointSetCount)}'
         # User callback to call before recording point
         self.samplingMode = 'Continuous'
         self.preRecordFunc = None

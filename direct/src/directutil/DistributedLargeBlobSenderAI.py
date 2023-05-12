@@ -30,8 +30,7 @@ class DistributedLargeBlobSenderAI(DistributedObjectAI.DistributedObjectAI):
             try:
                 os.chdir(bPath)
             except OSError:
-                DistributedLargeBlobSenderAI.notify.error(
-                    'could not access %s' % bPath)
+                DistributedLargeBlobSenderAI.notify.error(f'could not access {bPath}')
             # find an unused temp filename
             while 1:
                 num = random.randrange((1 << 30)-1)
@@ -40,17 +39,14 @@ class DistributedLargeBlobSenderAI(DistributedObjectAI.DistributedObjectAI):
                     os.stat(filename)
                 except OSError:
                     break
-            # NOTE: there's a small chance of a race condition here, if
-            # the file is created by another AI just after the stat fails
-            f = open(filename, 'wb')
-            f.write(s)
-            f.close()
+            with open(filename, 'wb') as f:
+                f.write(s)
             os.chdir(origDir)
             self.sendUpdateToAvatarId(self.targetAvId,
                                       'setFilename', [filename])
         else:
             chunkSize = LargeBlobSenderConsts.ChunkSize
-            while len(s) > 0:
+            while s != "":
                 self.sendUpdateToAvatarId(self.targetAvId,
                                           'setChunk', [s[:chunkSize]])
                 s = s[chunkSize:]

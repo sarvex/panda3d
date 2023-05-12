@@ -134,7 +134,7 @@ class DirectManipulationControl(DirectObject):
             return
 
         if self.fScaling1D == 0 and\
-           self.fScaling3D == 0:
+               self.fScaling3D == 0:
 
             # Check for a widget hit point
             entry = base.direct.iRay.pickWidget(skipFlags = DG.SKIP_WIDGET)
@@ -150,7 +150,7 @@ class DirectManipulationControl(DirectObject):
                 self.constraint = None
                 # [gjeon] to prohibit unwanted object movement while direct window doesn't have focus
                 if base.direct.cameraControl.useMayaCamControls and not base.direct.gotControl(modifiers) \
-                   and not self.fAllowMarquee:
+                       and not self.fAllowMarquee:
                     return
         else:
             entry = None
@@ -168,16 +168,15 @@ class DirectManipulationControl(DirectObject):
                 watchMouseTask.initX = base.direct.dr.mouseX
                 watchMouseTask.initY = base.direct.dr.mouseY
                 taskMgr.add(watchMouseTask, 'manip-watch-mouse')
-            else:
-                if base.direct.fControl:
-                    self.mode = 'move'
-                    self.manipulateObject()
-                elif not base.direct.fAlt and self.fAllowMarquee:
-                    self.moveDir = None
-                    watchMarqueeTask = Task.Task(self.watchMarqueeTask)
-                    watchMarqueeTask.initX = base.direct.dr.mouseX
-                    watchMarqueeTask.initY = base.direct.dr.mouseY
-                    taskMgr.add(watchMarqueeTask, 'manip-marquee-mouse')
+            elif base.direct.fControl:
+                self.mode = 'move'
+                self.manipulateObject()
+            elif not base.direct.fAlt and self.fAllowMarquee:
+                self.moveDir = None
+                watchMarqueeTask = Task.Task(self.watchMarqueeTask)
+                watchMarqueeTask.initX = base.direct.dr.mouseX
+                watchMarqueeTask.initY = base.direct.dr.mouseY
+                taskMgr.add(watchMarqueeTask, 'manip-marquee-mouse')
 
     def switchToWorldSpaceMode(self):
         self.worldSpaceManip = True
@@ -192,14 +191,15 @@ class DirectManipulationControl(DirectObject):
         return Task.done
 
     def watchMouseTask(self, state):
-        if (abs(state.initX - base.direct.dr.mouseX) > 0.01 or
-            abs(state.initY - base.direct.dr.mouseY) > 0.01):
-            taskMgr.remove('manip-move-wait')
-            self.mode = 'move'
-            self.manipulateObject()
-            return Task.done
-        else:
+        if (
+            abs(state.initX - base.direct.dr.mouseX) <= 0.01
+            and abs(state.initY - base.direct.dr.mouseY) <= 0.01
+        ):
             return Task.cont
+        taskMgr.remove('manip-move-wait')
+        self.mode = 'move'
+        self.manipulateObject()
+        return Task.done
 
     def watchMarqueeTask(self, state):
         taskMgr.remove('manip-watch-mouse')
@@ -298,12 +298,12 @@ class DirectManipulationControl(DirectObject):
 ##                         # Skip, if backfacing poly
 ##                         pass
                     elif (skipFlags & DG.SKIP_CAMERA) and \
-                         (base.camera in geom.getAncestors()):
+                             (base.camera in geom.getAncestors()):
                         # Skip if parented to a camera.
                         continue
                     # Can pick unpickable, use the first visible node
                     elif (skipFlags & DG.SKIP_UNPICKABLE) and \
-                         (geom.getName() in base.direct.iRay.unpickable):
+                             (geom.getName() in base.direct.iRay.unpickable):
                         # Skip if in unpickable list
                         continue
 
@@ -345,9 +345,11 @@ class DirectManipulationControl(DirectObject):
 
                             tightBoundTest = marqueeFrustum.contains(tbb)
 
-                            if tightBoundTest > 1:
-                                if nodePath not in selectionList:
-                                    selectionList.append(nodePath)
+                            if (
+                                tightBoundTest > 1
+                                and nodePath not in selectionList
+                            ):
+                                selectionList.append(nodePath)
 
                 for nodePath in selectionList:
                     base.direct.select(nodePath, 1)
@@ -422,12 +424,11 @@ class DirectManipulationControl(DirectObject):
                     widget.setHpr(render, VBase3(0))
                 else:
                     widget.setPosHpr(state.base, state.pos, state.hpr)
+        elif self.worldSpaceManip:
+            widget.setPos(state.base, state.pos)
+            widget.setHpr(render, VBase3(0))
         else:
-            if self.worldSpaceManip:
-                widget.setPos(state.base, state.pos)
-                widget.setHpr(render, VBase3(0))
-            else:
-                base.direct.widget.setPosHpr(state.base, state.pos, state.hpr)
+            base.direct.widget.setPosHpr(state.base, state.pos, state.hpr)
         return Task.cont
 
     def enableManipulation(self):
@@ -463,16 +464,14 @@ class DirectManipulationControl(DirectObject):
                     base.direct.widget.coaModeColor()
                 else:
                     self.objectHandles.coaModeColor()
+            elif hasattr(base.direct, 'widget'):
+                base.direct.widget.manipModeColor()
             else:
-                if hasattr(base.direct, 'widget'):
-                    base.direct.widget.manipModeColor()
-                else:
-                    self.objectHandles.manipModeColor()
+                self.objectHandles.manipModeColor()
+        elif hasattr(base.direct, 'widget'):
+            base.direct.widget.disabledModeColor()
         else:
-            if hasattr(base.direct, 'widget'):
-                base.direct.widget.disabledModeColor()
-            else:
-                self.objectHandles.disabledModeColor()
+            self.objectHandles.disabledModeColor()
 
     def removeManipulateObjectTask(self):
         taskMgr.remove('manipulateObject')
@@ -484,11 +483,10 @@ class DirectManipulationControl(DirectObject):
                 base.direct.widget.coaModeColor()
             else:
                 self.objectHandles.coaModeColor()
+        elif hasattr(base.direct, 'widget'):
+            base.direct.widget.manipModeColor()
         else:
-            if hasattr(base.direct, 'widget'):
-                base.direct.widget.manipModeColor()
-            else:
-                self.objectHandles.manipModeColor()
+            self.objectHandles.manipModeColor()
 
     def disableWidgetMove(self):
         self.fMovable = 0
@@ -509,8 +507,7 @@ class DirectManipulationControl(DirectObject):
         editTypes = 0
         for tag in self.unmovableTagList:
             for selected in objects:
-                unmovableTag = selected.getTag(tag)
-                if unmovableTag:
+                if unmovableTag := selected.getTag(tag):
                     # check value of unmovableTag to see if it is
                     # completely uneditable or if it allows only certain
                     # types of editing
@@ -545,9 +542,9 @@ class DirectManipulationControl(DirectObject):
                 self.objectHandles.showHandle(self.constraint)
             if base.direct.clusterMode == 'client':
                 oh = 'base.direct.manipulationControl.objectHandles'
-                cluster(oh + '.showGuides()', 0)
-                cluster(oh + '.hideAllHandles()', 0)
-                cluster(oh + ('.showHandle("%s")'% self.constraint), 0)
+                cluster(f'{oh}.showGuides()', 0)
+                cluster(f'{oh}.hideAllHandles()', 0)
+                cluster(f'{oh}.showHandle("{self.constraint}")', 0)
             # Record relationship between selected nodes and widget
             base.direct.selected.getWrtAll()
             # hide the bbox of the selected objects during interaction
@@ -563,16 +560,13 @@ class DirectManipulationControl(DirectObject):
         self.fHitInit = 1
         self.fScaleInit = 1
         if not self.fScaling1D and\
-           not self.fScaling3D:
+               not self.fScaling3D:
             self.fScaleInit1 = 1
         # record initial offset between widget and camera
         t = Task.Task(self.manipulateObjectTask)
         t.fMouseX = abs(base.direct.dr.mouseX) > 0.9
         t.fMouseY = abs(base.direct.dr.mouseY) > 0.9
-        if t.fMouseX:
-            t.constrainedDir = 'y'
-        else:
-            t.constrainedDir = 'x'
+        t.constrainedDir = 'y' if t.fMouseX else 'x'
         # Compute widget's xy coords in screen space
         t.coaCenter = getScreenXY(base.direct.widget)
         # These are used to rotate about view vector
@@ -585,72 +579,58 @@ class DirectManipulationControl(DirectObject):
             self.scale1D(state)
         elif self.fScaling3D:
             self.scale3D(state)
-        else:
-            # Widget takes precedence
-            if self.constraint:
-                type = self.constraint[2:]
-                if self.useSeparateScaleHandles:
-                    if type == 'post' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
-                        self.xlate1D(state)
-                    elif type == 'disc' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
-                        self.xlate2D(state)
-                    elif type == 'ring' and not self.currEditTypes & DG.EDIT_TYPE_UNROTATABLE:
-                        self.rotate1D(state)
-                    elif type == 'scale' and not self.currEditTypes & DG.EDIT_TYPE_UNSCALABLE:
-                        if base.direct.fShift:
-                            self.fScaling3D = 1
-                            self.scale3D(state)
-                        else:
-                            self.fScaling1D = 1
-                            self.scale1D(state)
+        elif self.constraint:
+            type = self.constraint[2:]
+            if self.useSeparateScaleHandles:
+                if type == 'post' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
+                    self.xlate1D(state)
+                elif type == 'disc' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
+                    self.xlate2D(state)
+                elif type == 'ring' and not self.currEditTypes & DG.EDIT_TYPE_UNROTATABLE:
+                    self.rotate1D(state)
+                elif type == 'scale' and not self.currEditTypes & DG.EDIT_TYPE_UNSCALABLE:
+                    if base.direct.fShift:
+                        self.fScaling3D = 1
+                        self.scale3D(state)
+                    else:
+                        self.fScaling1D = 1
+                        self.scale1D(state)
+            elif base.direct.fControl and not self.currEditTypes & DG.EDIT_TYPE_UNSCALABLE:
+                if type == 'post':
+                    # [gjeon] non-uniform scaling
+                    self.fScaling1D = 1
+                    self.scale1D(state)
                 else:
-                    if base.direct.fControl and not self.currEditTypes & DG.EDIT_TYPE_UNSCALABLE:
-                        if type == 'post':
-                            # [gjeon] non-uniform scaling
-                            self.fScaling1D = 1
-                            self.scale1D(state)
-                        else:
-                            # [gjeon] uniform scaling
-                            self.fScaling3D = 1
-                            self.scale3D(state)
-                    else:
-                        if type == 'post' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
-                            self.xlate1D(state)
-                        elif type == 'disc' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
-                            self.xlate2D(state)
-                        elif type == 'ring' and not self.currEditTypes & DG.EDIT_TYPE_UNROTATABLE:
-                            self.rotate1D(state)
-            # No widget interaction, determine free manip mode
-            elif self.fFreeManip and not self.useSeparateScaleHandles:
-                # If we've been scaling and changed modes, reset object handles
-                if 0 and (self.fScaling1D or self.fScaling3D) and (not base.direct.fAlt):
-                    if hasattr(base.direct, 'widget'):
-                        base.direct.widget.transferObjectHandleScale()
-                    else:
-                        self.objectHandles.transferObjectHandlesScale()
-
-                    self.fScaling1D = 0
-                    self.fScaling3D = 0
-                # Alt key switches to a scaling mode
-                if base.direct.fControl and not self.currEditTypes & DG.EDIT_TYPE_UNSCALABLE:
+                    # [gjeon] uniform scaling
                     self.fScaling3D = 1
                     self.scale3D(state)
-                # Otherwise, manip mode depends on where you started
-                elif state.fMouseX and state.fMouseY and not self.currEditTypes & DG.EDIT_TYPE_UNROTATABLE:
-                    # In the corner, spin around camera's axis
-                    self.rotateAboutViewVector(state)
-                elif state.fMouseX or state.fMouseY and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
-                    # Mouse started elsewhere in the outer frame, rotate
-                    self.rotate2D(state)
-                elif not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
-                    # Mouse started in central region, xlate
-                    # Mode depends on shift key
-                    if base.direct.fShift or base.direct.fControl:
-                        self.xlateCamXY(state)
-                    else:
-                        self.xlateCamXZ(state)
-            else:
-                return Task.done
+            elif type == 'post' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
+                self.xlate1D(state)
+            elif type == 'disc' and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
+                self.xlate2D(state)
+            elif type == 'ring' and not self.currEditTypes & DG.EDIT_TYPE_UNROTATABLE:
+                self.rotate1D(state)
+        elif self.fFreeManip and not self.useSeparateScaleHandles:
+            # Alt key switches to a scaling mode
+            if base.direct.fControl and not self.currEditTypes & DG.EDIT_TYPE_UNSCALABLE:
+                self.fScaling3D = 1
+                self.scale3D(state)
+            # Otherwise, manip mode depends on where you started
+            elif state.fMouseX and state.fMouseY and not self.currEditTypes & DG.EDIT_TYPE_UNROTATABLE:
+                # In the corner, spin around camera's axis
+                self.rotateAboutViewVector(state)
+            elif state.fMouseX or state.fMouseY and not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
+                # Mouse started elsewhere in the outer frame, rotate
+                self.rotate2D(state)
+            elif not self.currEditTypes & DG.EDIT_TYPE_UNMOVABLE:
+                # Mouse started in central region, xlate
+                # Mode depends on shift key
+                if base.direct.fShift or base.direct.fControl:
+                    self.xlateCamXY(state)
+                else:
+                    self.xlateCamXZ(state)
+        else:
+            return Task.done
         if self.fSetCoa:
             # Update coa based on current widget position
             base.direct.selected.last.mCoa2Dnp.assign(
@@ -673,10 +653,7 @@ class DirectManipulationControl(DirectObject):
         offsetY = nodePath.getY() + offset.getY()
         offsetZ = nodePath.getZ() + offset.getZ()
 
-        if offsetX < 0.0:
-            signX = -1.0
-        else:
-            signX = 1.0
+        signX = -1.0 if offsetX < 0.0 else 1.0
         modX = math.fabs(offsetX) % base.direct.grid.gridSpacing
         floorX = math.floor(math.fabs(offsetX) / base.direct.grid.gridSpacing)
         if modX < base.direct.grid.gridSpacing / 2.0:
@@ -684,10 +661,7 @@ class DirectManipulationControl(DirectObject):
         else:
             offsetX = signX * (floorX + 1) * base.direct.grid.gridSpacing
 
-        if offsetY < 0.0:
-            signY = -1.0
-        else:
-            signY = 1.0
+        signY = -1.0 if offsetY < 0.0 else 1.0
         modY = math.fabs(offsetY) % base.direct.grid.gridSpacing
         floorY = math.floor(math.fabs(offsetY) / base.direct.grid.gridSpacing)
         if modY < base.direct.grid.gridSpacing / 2.0:
@@ -695,10 +669,7 @@ class DirectManipulationControl(DirectObject):
         else:
             offsetY = signY * (floorY + 1) * base.direct.grid.gridSpacing
 
-        if offsetZ < 0.0:
-            signZ = -1.0
-        else:
-            signZ = 1.0
+        signZ = -1.0 if offsetZ < 0.0 else 1.0
         modZ = math.fabs(offsetZ) % base.direct.grid.gridSpacing
         floorZ = math.floor(math.fabs(offsetZ) / base.direct.grid.gridSpacing)
         if modZ < base.direct.grid.gridSpacing / 2.0:
@@ -733,11 +704,10 @@ class DirectManipulationControl(DirectObject):
                         widget.setPos(widget, offset)
                 #if base.direct.camera.getName() != 'persp':
                     #self.prevHit.assign(self.hitPt)
+            elif self.fGridSnap:
+                base.direct.widget.setPos(self.gridSnapping(base.direct.widget, offset))
             else:
-                if self.fGridSnap:
-                    base.direct.widget.setPos(self.gridSnapping(base.direct.widget, offset))
-                else:
-                    base.direct.widget.setPos(base.direct.widget, offset)
+                base.direct.widget.setPos(base.direct.widget, offset)
 
     def xlate2D(self, state):
         # Constrained 2D (planar) translation
@@ -763,11 +733,10 @@ class DirectManipulationControl(DirectObject):
                         widget.setPos(widget, offset)
                 if base.direct.camera.getName() != 'persp':
                     self.prevHit.assign(self.hitPt)
+            elif self.fGridSnap:
+                base.direct.widget.setPos(self.gridSnapping(base.direct.widget, offset))
             else:
-                if self.fGridSnap:
-                    base.direct.widget.setPos(self.gridSnapping(base.direct.widget, offset))
-                else:
-                    base.direct.widget.setPos(base.direct.widget, offset)
+                base.direct.widget.setPos(base.direct.widget, offset)
 
     def rotate1D(self, state):
         # Constrained 1D rotation about the widget's main axis (X, Y, or Z)
@@ -1015,7 +984,6 @@ class DirectManipulationControl(DirectObject):
                     # Scale factor is ratio current mag with init mag
                     currScale = Vec3(currScale.getX() * d1/d0, currScale.getY() * d1/d0, currScale.getZ() * d1/d0)
                     base.direct.widget.setScale(currScale)
-                return
             else:
                 self.hitPtScale.assign(self.objectHandles.getMouseIntersectPt())
 
@@ -1035,7 +1003,7 @@ class DirectManipulationControl(DirectObject):
                     currScale = self.origScale
                     currScale = currScale * d1/d0
                     base.direct.widget.setScale(currScale)
-                return
+            return
         # Scale the selected node based upon up down mouse motion
         # Mouse motion from edge to edge results in a factor of 4 scaling
         # From midpoint to edge doubles or halves objects scale
@@ -1204,13 +1172,12 @@ class ObjectHandles(NodePath, DirectObject):
                     widget.deactivate()
             else:
                 self.deactivate()
+        elif hasattr(base.direct, "manipulationControl") and base.direct.manipulationControl.fMultiView:
+            for widget in base.direct.manipulationControl.widgetList:
+                widget.activate()
+                widget.showWidgetIfActive()
         else:
-            if hasattr(base.direct, "manipulationControl") and base.direct.manipulationControl.fMultiView:
-                for widget in base.direct.manipulationControl.widgetList:
-                    widget.activate()
-                    widget.showWidgetIfActive()
-            else:
-                self.activate()
+            self.activate()
 
     def activate(self):
         self.scalingNode.reparentTo(self)

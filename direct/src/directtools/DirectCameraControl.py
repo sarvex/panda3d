@@ -177,7 +177,7 @@ class DirectCameraControl(DirectObject):
             # Start manipulation
             # If the cam is orthogonal, spawn differentTask
             if hasattr(base.direct, "manipulationControl") and base.direct.manipulationControl.fMultiView and\
-               base.direct.camera.getName() != 'persp':
+                   base.direct.camera.getName() != 'persp':
                 self.spawnOrthoTranslate()
             else:
                 self.spawnXZTranslate()
@@ -194,15 +194,14 @@ class DirectCameraControl(DirectObject):
                 # Start manipulation
                 self.spawnXZTranslateOrHPanYZoom()
                 # END MOUSE IN CENTRAL REGION
-            else:
-                if ((abs(base.direct.dr.mouseX) > 0.9) and
+            elif ((abs(base.direct.dr.mouseX) > 0.9) and
                     (abs(base.direct.dr.mouseY) > 0.9)):
-                    # Mouse is in corners, spawn roll task
-                    self.spawnMouseRollTask()
-                else:
-                    # Mouse is in outer frame, spawn mouseRotateTask
-                    self.spawnMouseRotateTask()
-        if not modifiers == 4:
+                # Mouse is in corners, spawn roll task
+                self.spawnMouseRollTask()
+            else:
+                # Mouse is in outer frame, spawn mouseRotateTask
+                self.spawnMouseRotateTask()
+        if modifiers != 4:
             self.altDown = 0
 
     def mouseFlyStop(self):
@@ -229,8 +228,10 @@ class DirectCameraControl(DirectObject):
             self.coaMarkerRef.setPosHprScale(base.cam, 0, 0, 0, 0, 0, 0, 1, 1, 1)
             # Record entries
             self.cqEntries = []
-            for i in range(base.direct.iRay.getNumEntries()):
-                self.cqEntries.append(base.direct.iRay.getEntry(i))
+            self.cqEntries.extend(
+                base.direct.iRay.getEntry(i)
+                for i in range(base.direct.iRay.getNumEntries())
+            )
         # Show the marker
         self.coaMarker.show()
         # Resize it
@@ -427,10 +428,7 @@ class DirectCameraControl(DirectObject):
         self.camManipRef.setPos(self.coaMarkerPos)
         self.camManipRef.setHpr(base.direct.camera, DG.ZERO_POINT)
         t = Task.Task(self.mouseRotateTask)
-        if abs(base.direct.dr.mouseX) > 0.9:
-            t.constrainedDir = 'y'
-        else:
-            t.constrainedDir = 'x'
+        t.constrainedDir = 'y' if abs(base.direct.dr.mouseX) > 0.9 else 'x'
         self.__startManipulateCamera(task = t)
 
     def mouseRotateTask(self, state):
@@ -565,7 +563,7 @@ class DirectCameraControl(DirectObject):
             # MRM: Would be nice to be able to control this
             # At least display it
             dist = pow(10.0, self.nullHitPointCount)
-            base.direct.message('COA Distance: ' + repr(dist))
+            base.direct.message(f'COA Distance: {repr(dist)}')
             coa.set(0, dist, 0)
         # Compute COA Dist
         coaDist = Vec3(coa - DG.ZERO_POINT).length()

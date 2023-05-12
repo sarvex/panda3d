@@ -25,7 +25,7 @@ class ControlManager:
     wantWASD = ConfigVariableBool('want-WASD', False)
 
     def __init__(self, enable=True, passMessagesThrough = False):
-        assert self.notify.debug("init control manager %s" % (passMessagesThrough))
+        assert self.notify.debug(f"init control manager {passMessagesThrough}")
         assert self.notify.debugCall(id(self))
         self.passMessagesThrough = passMessagesThrough
         self.inputStateTokens = []
@@ -43,10 +43,24 @@ class ControlManager:
 
         if self.passMessagesThrough: # for not breaking toontown
             ist=self.inputStateTokens
-            ist.append(inputState.watchWithModifiers("forward", "arrow_up", inputSource=inputState.ArrowKeys))
-            ist.append(inputState.watchWithModifiers("reverse", "arrow_down", inputSource=inputState.ArrowKeys))
-            ist.append(inputState.watchWithModifiers("turnLeft", "arrow_left", inputSource=inputState.ArrowKeys))
-            ist.append(inputState.watchWithModifiers("turnRight", "arrow_right", inputSource=inputState.ArrowKeys))
+            ist.extend(
+                (
+                    inputState.watchWithModifiers(
+                        "forward", "arrow_up", inputSource=inputState.ArrowKeys
+                    ),
+                    inputState.watchWithModifiers(
+                        "reverse", "arrow_down", inputSource=inputState.ArrowKeys
+                    ),
+                    inputState.watchWithModifiers(
+                        "turnLeft", "arrow_left", inputSource=inputState.ArrowKeys
+                    ),
+                    inputState.watchWithModifiers(
+                        "turnRight",
+                        "arrow_right",
+                        inputSource=inputState.ArrowKeys,
+                    ),
+                )
+            )
 
     def __str__(self):
         return 'ControlManager: using \'%s\'' % self.currentControlsName
@@ -65,7 +79,7 @@ class ControlManager:
         assert controls is not None
         oldControls = self.controls.get(name)
         if oldControls is not None:
-            assert self.notify.debug("Replacing controls: %s" % name)
+            assert self.notify.debug(f"Replacing controls: {name}")
             oldControls.disableAvatarControls()
             oldControls.setCollisionsActive(0)
             oldControls.delete()
@@ -89,7 +103,7 @@ class ControlManager:
         assert self.notify.debugCall(id(self))
         oldControls = self.controls.pop(name,None)
         if oldControls is not None:
-            assert self.notify.debug("Removing controls: %s" % name)
+            assert self.notify.debug(f"Removing controls: {name}")
             oldControls.disableAvatarControls()
             oldControls.setCollisionsActive(0)
 
@@ -114,23 +128,21 @@ class ControlManager:
             return
         controls = self.controls.get(name)
 
-        if controls is not None:
-            if controls is not self.currentControls:
-                if self.currentControls is not None:
-                    self.currentControls.disableAvatarControls()
-                    self.currentControls.setCollisionsActive(0)
-                    self.currentControls.setAvatar(None)
-                self.currentControls = controls
-                self.currentControlsName = name
-                self.currentControls.setAvatar(avatar)
-                self.currentControls.setCollisionsActive(1)
-                if self.isEnabled:
-                    self.currentControls.enableAvatarControls()
-                messenger.send('use-%s-controls'%(name,), [avatar])
-            #else:
-            #    print "Controls are already", name
-        else:
-            assert self.notify.debug("Unkown controls: %s" % name)
+        if controls is None:
+            assert self.notify.debug(f"Unkown controls: {name}")
+
+        elif controls is not self.currentControls:
+            if self.currentControls is not None:
+                self.currentControls.disableAvatarControls()
+                self.currentControls.setCollisionsActive(0)
+                self.currentControls.setAvatar(None)
+            self.currentControls = controls
+            self.currentControlsName = name
+            self.currentControls.setAvatar(avatar)
+            self.currentControls.setCollisionsActive(1)
+            if self.isEnabled:
+                self.currentControls.enableAvatarControls()
+            messenger.send(f'use-{name}-controls', [avatar])
 
     def setSpeeds(self, forwardSpeed, jumpForce,
             reverseSpeed, rotateSpeed, strafeLeft=0, strafeRight=0):
@@ -157,14 +169,10 @@ class ControlManager:
         #self.monitorTask.remove()
 
     def getSpeeds(self):
-        if self.currentControls:
-            return self.currentControls.getSpeeds()
-        return None
+        return self.currentControls.getSpeeds() if self.currentControls else None
 
     def getIsAirborne(self):
-        if self.currentControls:
-            return self.currentControls.getIsAirborne()
-        return False
+        return self.currentControls.getIsAirborne() if self.currentControls else False
 
     def setTag(self, key, value):
         assert self.notify.debugCall(id(self))
@@ -262,10 +270,24 @@ class ControlManager:
 
         if self.passMessagesThrough: # for not breaking toontown
             ist=self.inputStateTokens
-            ist.append(inputState.watchWithModifiers("forward", "arrow_up", inputSource=inputState.ArrowKeys))
-            ist.append(inputState.watchWithModifiers("reverse", "arrow_down", inputSource=inputState.ArrowKeys))
-            ist.append(inputState.watchWithModifiers("turnLeft", "arrow_left", inputSource=inputState.ArrowKeys))
-            ist.append(inputState.watchWithModifiers("turnRight", "arrow_right", inputSource=inputState.ArrowKeys))
+            ist.extend(
+                (
+                    inputState.watchWithModifiers(
+                        "forward", "arrow_up", inputSource=inputState.ArrowKeys
+                    ),
+                    inputState.watchWithModifiers(
+                        "reverse", "arrow_down", inputSource=inputState.ArrowKeys
+                    ),
+                    inputState.watchWithModifiers(
+                        "turnLeft", "arrow_left", inputSource=inputState.ArrowKeys
+                    ),
+                    inputState.watchWithModifiers(
+                        "turnRight",
+                        "arrow_right",
+                        inputSource=inputState.ArrowKeys,
+                    ),
+                )
+            )
 
     def stop(self):
         self.disable()

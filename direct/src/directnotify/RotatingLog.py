@@ -57,7 +57,7 @@ class RotatingLog:
     def filePath(self):
         dateString=time.strftime("%Y_%m_%d_%H", time.localtime())
         for i in range(26):
-            path="%s_%s_%s.log"%(self.path, dateString, chr(i+97))
+            path = f"{self.path}_{dateString}_{chr(i + 97)}.log"
             if not os.path.exists(path) or os.stat(path)[6] < self.sizeLimit:
                 return path
         # Hmm, 26 files are full?  throw the rest in z:
@@ -70,8 +70,7 @@ class RotatingLog:
         See write().
         """
         path=self.filePath()
-        file=open(path, "a")
-        if file:
+        if file := open(path, "a"):
             self.close()
             # This should be redundant with "a" open() mode,
             # but on some platforms tell() will return 0

@@ -48,9 +48,7 @@ class Placer(AppShell):
         self.refCS = self.tempCS
 
         # Dictionary keeping track of all node paths manipulated so far
-        self.nodePathDict = {}
-        self.nodePathDict['camera'] = SEditor.camera
-        self.nodePathDict['widget'] = SEditor.widget
+        self.nodePathDict = {'camera': SEditor.camera, 'widget': SEditor.widget}
         self.nodePathNames = ['camera', 'widget', 'selected']
 
         self.refNodePathDict = {}
@@ -148,19 +146,13 @@ class Placer(AppShell):
 
         self.undoButton = Button(menuFrame, text = 'Undo',
                                  command = SEditor.undo)
-        if SEditor.undoList:
-            self.undoButton['state'] = 'normal'
-        else:
-            self.undoButton['state'] = 'disabled'
+        self.undoButton['state'] = 'normal' if SEditor.undoList else 'disabled'
         self.undoButton.pack(side = 'left', expand = 0)
         self.bind(self.undoButton, 'Undo last operation')
 
         self.redoButton = Button(menuFrame, text = 'Redo',
                                  command = SEditor.redo)
-        if SEditor.redoList:
-            self.redoButton['state'] = 'normal'
-        else:
-            self.redoButton['state'] = 'disabled'
+        self.redoButton['state'] = 'normal' if SEditor.redoList else 'disabled'
         self.redoButton.pack(side = 'left', expand = 0)
         self.bind(self.redoButton, 'Redo last operation')
 
@@ -364,20 +356,20 @@ class Placer(AppShell):
         # Set prefix
         namePrefix = ''
         self.movementMode = movementMode
-        if (movementMode == 'Relative To:'):
-            namePrefix = 'Relative '
-        elif (movementMode == 'Orbit:'):
+        if movementMode == 'Orbit:':
             namePrefix = 'Orbit '
+        elif movementMode == 'Relative To:':
+            namePrefix = 'Relative '
         # Update pos widgets
-        self.posX['text'] = namePrefix + 'X'
-        self.posY['text'] = namePrefix + 'Y'
-        self.posZ['text'] = namePrefix + 'Z'
+        self.posX['text'] = f'{namePrefix}X'
+        self.posY['text'] = f'{namePrefix}Y'
+        self.posZ['text'] = f'{namePrefix}Z'
         # Update hpr widgets
         if (movementMode == 'Orbit:'):
             namePrefix = 'Orbit delta '
-        self.hprH['text'] = namePrefix + 'H'
-        self.hprP['text'] = namePrefix + 'P'
-        self.hprR['text'] = namePrefix + 'R'
+        self.hprH['text'] = f'{namePrefix}H'
+        self.hprP['text'] = f'{namePrefix}P'
+        self.hprR['text'] = f'{namePrefix}R'
         # Update temp cs and initialize widgets
         self.updatePlacer()
 
@@ -401,7 +393,7 @@ class Placer(AppShell):
             self.addNodePath(nodePath)
         else:
             nodePath = self.nodePathDict.get(name, None)
-            if (nodePath == None):
+            if nodePath is None:
                 # See if this evaluates into a node path
                 try:
                     nodePath = eval(name)
@@ -416,10 +408,9 @@ class Placer(AppShell):
                     # Clear bogus entry from listbox
                     listbox = self.nodePathMenu.component('scrolledlist')
                     listbox.setlist(self.nodePathNames)
-            else:
-                if name == 'widget':
-                    # Record relationship between selected nodes and widget
-                    SEditor.selected.getWrtAll()
+            elif name == 'widget':
+                # Record relationship between selected nodes and widget
+                SEditor.selected.getWrtAll()
         # Update active node path
         self.setActiveNodePath(nodePath)
 
@@ -459,7 +450,7 @@ class Placer(AppShell):
             nodePath = self['nodePath'].getParent()
         else:
             nodePath = self.refNodePathDict.get(name, None)
-            if (nodePath == None):
+            if nodePath is None:
                 # See if this evaluates into a node path
                 try:
                     nodePath = eval(name)
@@ -510,7 +501,7 @@ class Placer(AppShell):
             dictName = name
         else:
             # Generate a unique name for the dict
-            dictName = name + '-' + repr(nodePath.get_key())
+            dictName = f'{name}-{repr(nodePath.get_key())}'
         if dictName not in dict:
             # Update combo box to include new item
             names.append(dictName)
@@ -762,21 +753,20 @@ class Placer(AppShell):
         self.redoButton.configure(state = 'disabled')
 
     def printNodePathInfo(self):
-        np = self['nodePath']
-        if np:
-            name = np.getName()
-            pos = np.getPos()
-            hpr = np.getHpr()
-            scale = np.getScale()
-            posString = '%.2f, %.2f, %.2f' % (pos[0], pos[1], pos[2])
-            hprString = '%.2f, %.2f, %.2f' % (hpr[0], hpr[1], hpr[2])
-            scaleString = '%.2f, %.2f, %.2f' % (scale[0], scale[1], scale[2])
-            print('NodePath: %s' % name)
-            print('Pos: %s' % posString)
-            print('Hpr: %s' % hprString)
-            print('Scale: %s' % scaleString)
-            print(('%s.setPosHprScale(%s, %s, %s)' %
-                   (name, posString, hprString, scaleString)))
+        if not (np := self['nodePath']):
+            return
+        name = np.getName()
+        pos = np.getPos()
+        hpr = np.getHpr()
+        scale = np.getScale()
+        posString = '%.2f, %.2f, %.2f' % (pos[0], pos[1], pos[2])
+        hprString = '%.2f, %.2f, %.2f' % (hpr[0], hpr[1], hpr[2])
+        scaleString = '%.2f, %.2f, %.2f' % (scale[0], scale[1], scale[2])
+        print(f'NodePath: {name}')
+        print(f'Pos: {posString}')
+        print(f'Hpr: {hprString}')
+        print(f'Scale: {scaleString}')
+        print(f'{name}.setPosHprScale({posString}, {hprString}, {scaleString})')
 
     def onDestroy(self, event):
         # Remove hooks

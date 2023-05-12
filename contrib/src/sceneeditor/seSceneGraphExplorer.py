@@ -98,7 +98,8 @@ class seSceneGraphExplorer(Pmw.MegaWidget, DirectObject):
 
         # Add update parent label
         def updateLabel(nodePath = None, s = self):
-            s._label['text'] = 'Active Reparent Target: ' + nodePath.getName()
+            s._label['text'] = f'Active Reparent Target: {nodePath.getName()}'
+
         self.accept('DIRECT_activeParent', updateLabel)
 
         # Add update hook
@@ -159,11 +160,10 @@ class SceneGraphExplorerItem(TreeItem):
     def GetText(self):
         type = self.nodePath.node().getType().getName()
         name = self.nodePath.getName()
-        return type + "  " + name
+        return f"{type}  {name}"
 
     def GetTextForEdit(self):
-        name = self.nodePath.getName()
-        return name
+        return self.nodePath.getName()
 
     def GetKey(self):
         return self.nodePath.get_key()
@@ -200,12 +200,12 @@ class SceneGraphExplorerItem(TreeItem):
             messenger.send('SGE_madeSelection', [self.nodePath])
 
     def MenuCommand(self, command):
-        messenger.send('SGE_' + command, [self.nodePath])
+        messenger.send(f'SGE_{command}', [self.nodePath])
 
 
 def explore(nodePath = render):
     tl = Toplevel()
-    tl.title('Explore: ' + nodePath.getName())
+    tl.title(f'Explore: {nodePath.getName()}')
     sge = seSceneGraphExplorer(parent = tl, nodePath = nodePath)
     sge.pack(expand = 1, fill = 'both')
     return sge

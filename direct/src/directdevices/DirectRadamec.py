@@ -23,7 +23,7 @@ class DirectRadamec(DirectObject):
         if base.direct.deviceManager is None:
             base.direct.deviceManager = DirectDeviceManager()
         # Set name
-        self.name = 'Radamec-' + repr(DirectRadamec.radamecCount)
+        self.name = f'Radamec-{repr(DirectRadamec.radamecCount)}'
         DirectRadamec.radamecCount += 1
         # Get analogs
         self.device = device
@@ -43,10 +43,10 @@ class DirectRadamec(DirectObject):
         # Kill existing task
         self.disable()
         # Update task
-        taskMgr.add(self.updateTask, self.name + '-updateTask')
+        taskMgr.add(self.updateTask, f'{self.name}-updateTask')
 
     def disable(self):
-        taskMgr.remove(self.name + '-updateTask')
+        taskMgr.remove(f'{self.name}-updateTask')
 
     def destroy(self):
         self.disable()
@@ -61,11 +61,11 @@ class DirectRadamec(DirectObject):
         panVal = self.normalizeChannel(RAD_PAN, -180, 180)
         tiltVal = self.normalizeChannel(RAD_TILT, -90, 90)
 
-        self.notify.debug("PAN = %s" % self.aList[RAD_PAN])
-        self.notify.debug("TILT = %s" % self.aList[RAD_TILT])
-        self.notify.debug("ZOOM = %s" % self.aList[RAD_ZOOM])
-        self.notify.debug("FOCUS = %s" % self.aList[RAD_FOCUS])
-        self.notify.debug("Normalized: panVal: %s  tiltVal: %s" % (panVal, tiltVal))
+        self.notify.debug(f"PAN = {self.aList[RAD_PAN]}")
+        self.notify.debug(f"TILT = {self.aList[RAD_TILT]}")
+        self.notify.debug(f"ZOOM = {self.aList[RAD_ZOOM]}")
+        self.notify.debug(f"FOCUS = {self.aList[RAD_FOCUS]}")
+        self.notify.debug(f"Normalized: panVal: {panVal}  tiltVal: {tiltVal}")
 
     # Normalize to the range [-minVal, maxVal] based on some hard-coded
     # max/min numbers of the Radamec device

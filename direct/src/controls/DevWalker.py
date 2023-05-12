@@ -57,8 +57,6 @@ class DevWalker(DirectObject.DirectObject):
 
     def setAvatar(self, avatar):
         self.avatar = avatar
-        if avatar is not None:
-            pass # setup the avatar
 
     def setWallBitMask(self, bitMask):
         pass
@@ -174,7 +172,8 @@ class DevWalker(DirectObject.DirectObject):
             self.task.remove(self.task)
         # spawn the new task
         self.task = taskMgr.add(
-            self.handleAvatarControls, "AvatarControls-dev-%s"%(id(self),))
+            self.handleAvatarControls, f"AvatarControls-dev-{id(self)}"
+        )
 
     def disableAvatarControls(self):
         """
@@ -191,5 +190,4 @@ class DevWalker(DirectObject.DirectObject):
     if __debug__:
         def debugPrint(self, message):
             """for debugging"""
-            return self.notify.debug(
-                    str(id(self))+' '+message)
+            return self.notify.debug(f'{id(self)} {message}')

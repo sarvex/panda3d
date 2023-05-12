@@ -48,7 +48,7 @@ class DirectJoybox(DirectObject):
             base.direct.deviceManager = DirectDeviceManager()
         # Set name
         DirectJoybox.joyboxCount += 1
-        self.name = 'Joybox-' + repr(DirectJoybox.joyboxCount)
+        self.name = f'Joybox-{repr(DirectJoybox.joyboxCount)}'
         # Get buttons and analogs
         self.device = device
         self.analogs = base.direct.deviceManager.createAnalogs(self.device)
@@ -99,10 +99,10 @@ class DirectJoybox(DirectObject):
         self.acceptSwitchModeEvent()
         self.acceptUprightCameraEvent()
         # Update task
-        taskMgr.add(self.updateTask, self.name + '-updateTask')
+        taskMgr.add(self.updateTask, f'{self.name}-updateTask')
 
     def disable(self):
-        taskMgr.remove(self.name + '-updateTask')
+        taskMgr.remove(f'{self.name}-updateTask')
         # Ignore button events
         self.ignoreSwitchModeEvent()
         self.ignoreUprightCameraEvent()
@@ -133,7 +133,7 @@ class DirectJoybox(DirectObject):
         return self.refCS
 
     def getEventName(self, index):
-        return self.name + '-button-' + repr(index)
+        return f'{self.name}-button-{repr(index)}'
 
     def setXyzMultiplier(self, multiplier):
         DirectJoybox.xyzMultiplier = multiplier
@@ -184,7 +184,7 @@ class DirectJoybox(DirectObject):
             else:
                 val = max(val - ANALOG_DEADBAND, 0.0)
             # Scale up rotating knob values
-            if chan == L_TWIST or chan == R_TWIST:
+            if chan in [L_TWIST, R_TWIST]:
                 val *= 3.0
             # Now clamp value between minVal and maxVal
             val = CLAMP(val, JOYBOX_MIN, JOYBOX_MAX)
@@ -218,10 +218,11 @@ class DirectJoybox(DirectObject):
         def hideText(state, s=self):
             s.readout.setText('')
             return Task.done
-        taskMgr.remove(self.name + '-showMode')
+
+        taskMgr.remove(f'{self.name}-showMode')
         # Update display
         self.readout.setText(modeText)
-        t = taskMgr.doMethodLater(3.0, hideText, self.name + '-showMode')
+        t = taskMgr.doMethodLater(3.0, hideText, f'{self.name}-showMode')
         t.setUponDeath(hideText)
 
     def acceptUprightCameraEvent(self, button = L_UPPER):
@@ -428,9 +429,7 @@ class DirectJoybox(DirectObject):
             # Compute dist
             offsetDist = np2planet.length()
             # Above threshold, leave velocity vec as is
-            if offsetDist > (1.2 * radius):
-                pass
-            else:
+            if offsetDist <= 1.2 * radius:
                 # Getting close, slow things down
                 # Compute normal vector through node Path
                 oNorm = Vec3()
@@ -503,7 +502,7 @@ class DirectJoybox(DirectObject):
 
     def normalizeChannel(self, chan, minVal = -1, maxVal = 1):
         try:
-            if chan == L_TWIST or chan == R_TWIST:
+            if chan in [L_TWIST, R_TWIST]:
                 # These channels have reduced range
                 return self.analogs.normalize(
                     self.analogs.getControlState(chan), minVal, maxVal, 3.0)

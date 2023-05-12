@@ -47,9 +47,6 @@ class DirectNodePath(NodePath):
         self.tDnp2Widget = TransformState.makeIdentity()
 
     def highlight(self, fRecompute = 1):
-        if fRecompute:
-            pass
-            #self.bbox.recompute()
         self.bbox.show()
 
     def dehighlight(self):
@@ -174,12 +171,7 @@ class SelectedNodePaths(DirectObject):
         """
         Search selectedDict for node path, try to repair broken node paths.
         """
-        dnp = self.selectedDict.get(id, None)
-        if dnp:
-            return dnp
-        else:
-            # Not in selected dictionary
-            return None
+        return dnp if (dnp := self.selectedDict.get(id, None)) else None
 
     def getDeselectedAsList(self):
         return list(self.deselectedDict.values())
@@ -188,13 +180,7 @@ class SelectedNodePaths(DirectObject):
         """
         Search deselectedDict for node path, try to repair broken node paths.
         """
-        dnp = self.deselectedDict.get(id, None)
-        if dnp:
-            # Yes
-            return dnp
-        else:
-            # Not in deselected dictionary
-            return None
+        return dnp if (dnp := self.deselectedDict.get(id, None)) else None
 
     def forEachSelectedNodePathDo(self, func):
         """
@@ -236,8 +222,7 @@ class SelectedNodePaths(DirectObject):
         self.forEachSelectedNodePathDo(DirectNodePath.dehighlight)
 
     def removeSelected(self):
-        selected = self.last
-        if selected:
+        if selected := self.last:
             selected.remove()
         __builtins__["last"] = self.last = None
 
@@ -246,9 +231,7 @@ class SelectedNodePaths(DirectObject):
         self.forEachSelectedNodePathDo(NodePath.remove)
 
     def toggleVisSelected(self):
-        selected = self.last
-        # Toggle visibility of selected node paths
-        if selected:
+        if selected := self.last:
             if selected.isHidden():
                 selected.show()
             else:
@@ -264,8 +247,7 @@ class SelectedNodePaths(DirectObject):
                 nodePath.hide()
 
     def isolateSelected(self):
-        selected = self.last
-        if selected:
+        if selected := self.last:
             selected.showAllDescendents()
             for sib in selected.getParent().getChildren():
                 if sib.node() != selected.node():
@@ -274,12 +256,7 @@ class SelectedNodePaths(DirectObject):
     def getDirectNodePath(self, nodePath):
         # Get this pointer
         id = nodePath.get_key()
-        # First check selected dict
-        dnp = self.getSelectedDict(id)
-        if dnp:
-            return dnp
-        # Otherwise return result of deselected search
-        return self.getDeselectedDict(id)
+        return dnp if (dnp := self.getSelectedDict(id)) else self.getDeselectedDict(id)
 
     def getNumSelected(self):
         return len(self.selectedDict)
@@ -532,10 +509,7 @@ class SelectionQueue(CollisionHandlerQueue):
             self.unpickable.remove(item)
 
     def setCurrentIndex(self, index):
-        if (index < 0) or (index >= self.getNumEntries()):
-            self.index = -1
-        else:
-            self.index = index
+        self.index = -1 if (index < 0) or (index >= self.getNumEntries()) else index
 
     def setCurrentEntry(self, entry):
         self.entry = entry
@@ -551,11 +525,7 @@ class SelectionQueue(CollisionHandlerQueue):
             # Well, no way to tell.  Assume we're not backfacing.
             return 0
 
-        if base.direct:
-            cam = base.direct.cam
-        else:
-            cam = base.cam
-
+        cam = base.direct.cam if base.direct else base.cam
         fromNodePath = entry.getFromNodePath()
         v = Vec3(entry.getSurfacePoint(fromNodePath))
         n = entry.getSurfaceNormal(fromNodePath)
@@ -587,25 +557,24 @@ class SelectionQueue(CollisionHandlerQueue):
                 # Skip, if backfacing poly
                 pass
             elif (skipFlags & DG.SKIP_CAMERA) and \
-                 (base.camera in nodePath.getAncestors()):
+                     (base.camera in nodePath.getAncestors()):
                 # Skip if parented to a camera.
                 pass
-            # Can pick unpickable, use the first visible node
             elif (skipFlags & DG.SKIP_UNPICKABLE) and \
-                 (nodePath.getName() in self.unpickable):
+                     (nodePath.getName() in self.unpickable):
                 # Skip if in unpickable list
                 pass
             elif base.direct and \
-                 ((skipFlags & DG.SKIP_WIDGET) and
+                     ((skipFlags & DG.SKIP_WIDGET) and
                  (nodePath.getTag('WidgetName') != base.direct.widget.getName())):
                 # Skip if this widget part is not belong to current widget
                 pass
-            elif base.direct and \
-                 ((skipFlags & DG.SKIP_WIDGET) and base.direct.fControl and
-                 (nodePath.getName()[2:] == 'ring')):
-                # Skip when ununiformly scale in ortho view
-                pass
-            else:
+            elif (
+                not base.direct
+                or not skipFlags & DG.SKIP_WIDGET
+                or not base.direct.fControl
+                or nodePath.getName()[2:] != 'ring'
+            ):
                 self.setCurrentIndex(i)
                 self.setCurrentEntry(entry)
                 break
@@ -709,7 +678,7 @@ class SelectionSegment(SelectionQueue):
         SelectionQueue.__init__(self, parentNP)
         self.colliders = []
         self.numColliders = 0
-        for i in range(numSegments):
+        for _ in range(numSegments):
             self.addCollider(CollisionSegment())
 
     def addCollider(self, collider):
@@ -758,7 +727,7 @@ class SelectionSphere(SelectionQueue):
         SelectionQueue.__init__(self, parentNP)
         self.colliders = []
         self.numColliders = 0
-        for i in range(numSpheres):
+        for _ in range(numSpheres):
             self.addCollider(CollisionSphere(Point3(0), 1))
 
     def addCollider(self, collider):

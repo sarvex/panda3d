@@ -78,7 +78,7 @@ class ObserverWalker(NonPhysicsWalker.NonPhysicsWalker):
         del self.pusher
 
     def setCollisionsActive(self, active = 1):
-        assert self.debugPrint("setCollisionsActive(active%s)"%(active,))
+        assert self.debugPrint(f"setCollisionsActive(active{active})")
         if self.collisionsActive != active:
             self.collisionsActive = active
             if active:

@@ -110,19 +110,17 @@ class InputState(DirectObject.DirectObject):
         elif name in self._forcingOff:
             return False
         if inputSource:
-            s = self._state.get(name)
-            if s:
-                return inputSource in s
-            else:
-                return False
+            return inputSource in s if (s := self._state.get(name)) else False
         else:
             return name in self._state
 
     def getEventName(self, name):
-        return "InputState-%s" % (name,)
+        return f"InputState-{name}"
 
     def set(self, name, isActive, inputSource=None):
-        assert self.debugPrint("set(name=%s, isActive=%s, inputSource=%s)"%(name, isActive, inputSource))
+        assert self.debugPrint(
+            f"set(name={name}, isActive={isActive}, inputSource={inputSource})"
+        )
         # inputSource is a string that identifies where this input change
         # is coming from (like 'WASD', 'ArrowKeys', etc.)
         # Each unique inputSource is allowed to influence this input item
@@ -133,11 +131,10 @@ class InputState(DirectObject.DirectObject):
         if isActive:
             self._state.setdefault(name, set())
             self._state[name].add(inputSource)
-        else:
-            if name in self._state:
-                self._state[name].discard(inputSource)
-                if len(self._state[name]) == 0:
-                    del self._state[name]
+        elif name in self._state:
+            self._state[name].discard(inputSource)
+            if len(self._state[name]) == 0:
+                del self._state[name]
         # We change the name before sending it because this may
         # be the same name that messenger used to call InputState.set()
         # this avoids running in circles:
@@ -161,10 +158,10 @@ class InputState(DirectObject.DirectObject):
             token.release()
         """
         assert self.debugPrint(
-            "watch(name=%s, eventOn=%s, eventOff=%s, startState=%s)"%(
-            name, eventOn, eventOff, startState))
+            f"watch(name={name}, eventOn={eventOn}, eventOff={eventOff}, startState={startState})"
+        )
         if inputSource is None:
-            inputSource = "eventPair('%s','%s')" % (eventOn, eventOff)
+            inputSource = f"eventPair('{eventOn}','{eventOff}')"
         # Do we really need to reset the input state just because
         # we're watching it?  Remember, there may be multiple things
         # watching this input state.
@@ -183,7 +180,15 @@ class InputState(DirectObject.DirectObject):
                     'control-alt-%s', 'shift-%s', 'shift-alt-%s')
         tGroup = InputStateTokenGroup()
         for pattern in patterns:
-            tGroup.addToken(self.watch(name, pattern % event, '%s-up' % event, startState=startState, inputSource=inputSource))
+            tGroup.addToken(
+                self.watch(
+                    name,
+                    pattern % event,
+                    f'{event}-up',
+                    startState=startState,
+                    inputSource=inputSource,
+                )
+            )
         return tGroup
 
     def _ignore(self, token):
@@ -222,16 +227,14 @@ class InputState(DirectObject.DirectObject):
         if value:
             if name in self._forcingOff:
                 self.notify.error(
-                    "%s is trying to force '%s' to ON, but '%s' is already being forced OFF by %s" %
-                    (inputSource, name, name, self._forcingOff[name])
+                    f"{inputSource} is trying to force '{name}' to ON, but '{name}' is already being forced OFF by {self._forcingOff[name]}"
                 )
             self._forcingOn.setdefault(name, set())
             self._forcingOn[name].add(inputSource)
         else:
             if name in self._forcingOn:
                 self.notify.error(
-                    "%s is trying to force '%s' to OFF, but '%s' is already being forced ON by %s" %
-                    (inputSource, name, name, self._forcingOn[name])
+                    f"{inputSource} is trying to force '{name}' to OFF, but '{name}' is already being forced ON by {self._forcingOn[name]}"
                 )
             self._forcingOff.setdefault(name, set())
             self._forcingOff[name].add(inputSource)
@@ -254,8 +257,7 @@ class InputState(DirectObject.DirectObject):
 
     def debugPrint(self, message):
         """for debugging"""
-        return self.notify.debug(
-            "%s (%s) %s"%(id(self), len(self._state), message))
+        return self.notify.debug(f"{id(self)} ({len(self._state)}) {message}")
 
     #snake_case alias:
     watch_with_modifiers = watchWithModifiers

@@ -153,9 +153,9 @@ class ClusterClient(DirectObject.DirectObject):
     def controlObjectTask(self, task):
         for pair in self.sortedControlMappings:
             object     = pair[1]
-            name       = self.controlMappings[object][0]
-            serverList = self.controlMappings[object][1]
             if object in self.objectMappings:
+                name       = self.controlMappings[object][0]
+                serverList = self.controlMappings[object][1]
                 self.moveObject(self.objectMappings[object],name,serverList,
                                 self.controlOffsets[object], self.objectHasColor[object])
         self.sendNamedMovementDone()
@@ -169,23 +169,18 @@ class ClusterClient(DirectObject.DirectObject):
             self.serverList[server].sendNamedMovementDone()
 
     def redoSortedPriorities(self):
-        self.sortedControlMappings = []
-        for key in self.controlMappings:
-            self.sortedControlMappings.append([self.controlPriorities[key],
-                                               key])
-
+        self.sortedControlMappings = [
+            [self.controlPriorities[key], key] for key in self.controlMappings
+        ]
         self.sortedControlMappings.sort()
 
     def moveObject(self, nodePath, object, serverList, offset, hasColor = True):
-        self.notify.debug('moving object '+object)
+        self.notify.debug(f'moving object {object}')
         xyz = nodePath.getPos(render) + offset
         hpr = nodePath.getHpr(render)
         scale = nodePath.getScale(render)
         hidden = nodePath.isHidden()
-        if hasColor:
-            color = nodePath.getColor()
-        else:
-            color = [1,1,1,1]
+        color = nodePath.getColor() if hasColor else [1,1,1,1]
         for server in serverList:
             self.serverList[server].sendMoveNamedObject(xyz,hpr,scale,color,hidden,object)
 
@@ -220,7 +215,7 @@ class ClusterClient(DirectObject.DirectObject):
             self.objectMappings[name] = object
             self.objectHasColor[name] = hasColor
         else:
-            self.notify.debug('attempt to add duplicate named object: '+name)
+            self.notify.debug(f'attempt to add duplicate named object: {name}')
 
     def removeObjectMapping(self,name):
         if name in self.objectMappings:
@@ -239,9 +234,7 @@ class ClusterClient(DirectObject.DirectObject):
             self.controlPriorities[objectName] = priority
         else:
             oldList = self.controlMappings[objectName]
-            mergedList = []
-            for item in oldList:
-                mergedList.append(item)
+            mergedList = list(oldList)
             for item in serverList:
                 if item not in mergedList:
                     mergedList.append(item)
@@ -260,12 +253,9 @@ class ClusterClient(DirectObject.DirectObject):
                 self.controlPriorities.pop(name)
             else:
                 oldList = self.controlMappings[key][1]
-                newList = []
-                for server in oldList:
-                    if server not in serverList:
-                        newList.append(server)
+                newList = [server for server in oldList if server not in serverList]
                 self.controlMappings[key][1] = newList
-                if len(newList) == 0:
+                if not newList:
                     self.controlMappings.pop(name)
                     self.controlPriorities.pop(name)
         self.redoSortedPriorities()
@@ -273,28 +263,24 @@ class ClusterClient(DirectObject.DirectObject):
     def getNodePathFindCmd(self, nodePath):
         pathString = repr(nodePath)
         index = pathString.find('/')
-        if index != -1:
-            rootName = pathString[:index]
-            searchString = pathString[index+1:]
-            return rootName + ('.find("%s")' % searchString)
-        else:
+        if index == -1:
             return rootName
+        rootName = pathString[:index]
+        searchString = pathString[index+1:]
+        return f'{rootName}.find("{searchString}")'
 
     def getNodePathName(self, nodePath):
         pathString = repr(nodePath)
         index = pathString.find('/')
-        if index != -1:
-            name = pathString[index+1:]
-            return name
-        else:
-            return pathString
+        return pathString[index+1:] if index != -1 else pathString
 
     def addObjectTag(self,object,selectFunction,deselectFunction,selectArgs,deselectArgs):
-        newTag = {}
-        newTag["selectFunction"] = selectFunction
-        newTag["selectArgs"]     = selectArgs
-        newTag["deselectFunction"] = deselectFunction
-        newTag["deselectArgs"]     = deselectArgs
+        newTag = {
+            "selectFunction": selectFunction,
+            "selectArgs": selectArgs,
+            "deselectFunction": deselectFunction,
+            "deselectArgs": deselectArgs,
+        }
         self.taggedObjects[object] = newTag
 
     def removeObjectTag(self,object):
@@ -311,7 +297,7 @@ class ClusterClient(DirectObject.DirectObject):
             if function is not None:
                 function(*args)
         else:
-            self(self.getNodePathFindCmd(nodePath) + '.select()', 0)
+            self(f'{self.getNodePathFindCmd(nodePath)}.select()', 0)
 
     def deselectNodePath(self, nodePath):
         name = self.getNodePathName(nodePath)
@@ -322,7 +308,7 @@ class ClusterClient(DirectObject.DirectObject):
             if function is not None:
                 function(*args)
             self.startMoveSelectedTask()
-        self(self.getNodePathFindCmd(nodePath) + '.deselect()', 0)
+        self(f'{self.getNodePathFindCmd(nodePath)}.deselect()', 0)
 
     def sendCamFrustum(self, focalLength, filmSize, filmOffset, indexList=[]):
         if indexList:
@@ -391,7 +377,7 @@ class ClusterClient(DirectObject.DirectObject):
             else:
                 self.objectMappings[name].show()
         else:
-            self.notify.debug("recieved unknown named object command: "+name)
+            self.notify.debug(f"recieved unknown named object command: {name}")
 
     def exit(self):
         # Execute remotely
@@ -450,14 +436,12 @@ class DisplayConnection:
         # A giant 300 second timeout.
         self.tcpConn = qcm.openTCPClientConnection(
             serverName, port, gameServerTimeoutMs)
-        # Test for bad connection
         if self.tcpConn is None:
             return None
-        else:
-            self.tcpConn.setNoDelay(1)
-            self.qcr=QueuedConnectionReader(qcm, 0)
-            self.qcr.addConnection(self.tcpConn)
-            self.cw=ConnectionWriter(qcm, 0)
+        self.tcpConn.setNoDelay(1)
+        self.qcr=QueuedConnectionReader(qcm, 0)
+        self.qcr.addConnection(self.tcpConn)
+        self.cw=ConnectionWriter(qcm, 0)
 
     def poll(self):
         """ Non blocking task to read all available datagrams """
@@ -545,7 +529,7 @@ class DisplayConnection:
         self.cw.send(datagram, self.tcpConn)
 
     def sendCommandString(self, commandString):
-        ClusterClient.notify.debug("send command string: %s" % commandString)
+        ClusterClient.notify.debug(f"send command string: {commandString}")
         datagram = self.msgHandler.makeCommandStringDatagram(commandString)
         self.cw.send(datagram, self.tcpConn)
 
@@ -596,8 +580,8 @@ def createClusterClient():
     # No cluster config specified!
     if clusterConfig not in ClientConfigs:
         base.notify.warning(
-            'createClusterClient: %s cluster-config is undefined.' %
-            clusterConfig)
+            f'createClusterClient: {clusterConfig} cluster-config is undefined.'
+        )
         return None
     # Get display config for each server in the cluster
     displayConfigs = []
@@ -626,23 +610,21 @@ def createClusterClient():
             if fo is not None:
                 lens.setFilmOffset(fo[0], fo[1])
         else:
-            serverConfigName = 'cluster-server-%s' % displayName
+            serverConfigName = f'cluster-server-{displayName}'
             serverName = base.config.GetString(serverConfigName, '')
             if serverName == '':
                 base.notify.warning(
-                    '%s undefined in Configrc: expected by %s display client.'%
-                    (serverConfigName, clusterConfig))
-                base.notify.warning('%s will not be used.' % serverConfigName)
+                    f'{serverConfigName} undefined in Configrc: expected by {clusterConfig} display client.'
+                )
+                base.notify.warning(f'{serverConfigName} will not be used.')
             else:
                 # Daemon port
-                serverDaemonPortConfigName = (
-                    'cluster-server-daemon-port-%s' % displayName)
+                serverDaemonPortConfigName = f'cluster-server-daemon-port-{displayName}'
                 serverDaemonPort = base.config.GetInt(
                     serverDaemonPortConfigName,
                     CLUSTER_DAEMON_PORT)
                 # TCP Server port
-                serverMsgPortConfigName = (
-                    'cluster-server-msg-port-%s' % displayName)
+                serverMsgPortConfigName = f'cluster-server-msg-port-{displayName}'
                 serverMsgPort = base.config.GetInt(serverMsgPortConfigName,
                                                    CLUSTER_SERVER_PORT)
                 cci = ClusterConfigItem(
@@ -656,15 +638,12 @@ def createClusterClient():
                 if fl and fs and fo:
                     cci.setCamFrustum(fl, fs, fo)
                 displayConfigs.append(cci)
-    # Create Cluster Managers (opening connections to servers)
-    # Are the servers going to be synced?
-    if base.clusterSyncFlag:
-        base.notify.warning('autoflip')
-        base.graphicsEngine.setAutoFlip(0)
-        base.notify.warning('ClusterClientSync')
-        return ClusterClientSync(displayConfigs, base.clusterSyncFlag)
-    else:
+    if not base.clusterSyncFlag:
         return ClusterClient(displayConfigs, base.clusterSyncFlag)
+    base.notify.warning('autoflip')
+    base.graphicsEngine.setAutoFlip(0)
+    base.notify.warning('ClusterClientSync')
+    return ClusterClientSync(displayConfigs, base.clusterSyncFlag)
 
 
 class DummyClusterClient(DirectObject.DirectObject):

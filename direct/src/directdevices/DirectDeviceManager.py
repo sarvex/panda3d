@@ -54,7 +54,7 @@ class DirectButtons(ButtonNode, DirectObject):
         # Create a new button node for the given device
         ButtonNode.__init__(self, vrpnClient, device)
         # Create a unique name for this button object
-        self.name = 'DirectButtons-' + repr(DirectButtons.buttonCount)
+        self.name = f'DirectButtons-{repr(DirectButtons.buttonCount)}'
 
         # Attach node to data graph
         try:
@@ -84,7 +84,7 @@ class DirectButtons(ButtonNode, DirectObject):
         return self.nodePath
 
     def __repr__(self):
-        string = self.name + ': '
+        string = f'{self.name}: '
         for val in self:
             string = string + '%d' % val + ' '
         return string
@@ -103,7 +103,7 @@ class DirectAnalogs(AnalogNode, DirectObject):
         # Create a new analog node for the given device
         AnalogNode.__init__(self, vrpnClient, device)
         # Create a unique name for this analog object
-        self.name = 'DirectAnalogs-' + repr(DirectAnalogs.analogCount)
+        self.name = f'DirectAnalogs-{repr(DirectAnalogs.analogCount)}'
 
         # Attach node to data graph
         try:
@@ -138,10 +138,7 @@ class DirectAnalogs(AnalogNode, DirectObject):
         # This is the old code that doesn't incorporate the centering fix
         #
         # First record sign
-        if val < 0:
-            sign = -1
-        else:
-            sign = 1
+        sign = -1 if val < 0 else 1
         # Zero out values in deadband
         val = sign * max(abs(val) - self.analogDeadband, 0.0)
         # Clamp value between analog range min and max and scale about center
@@ -187,7 +184,7 @@ class DirectAnalogs(AnalogNode, DirectObject):
         return self.nodePath
 
     def __repr__(self):
-        string = self.name + ': '
+        string = f'{self.name}: '
         for val in self:
             string = string + '%.3f' % val + ' '
         return string
@@ -201,7 +198,7 @@ class DirectTracker(TrackerNode, DirectObject):
         # Create a new tracker node for the given device
         TrackerNode.__init__(self, vrpnClient, device)
         # Create a unique name for this tracker object
-        self.name = 'DirectTracker-' + repr(DirectTracker.trackerCount)
+        self.name = f'DirectTracker-{repr(DirectTracker.trackerCount)}'
 
         # Attach node to data graph
         try:
@@ -233,7 +230,7 @@ class DirectDials(DialNode, DirectObject):
         # Create a new dial node for the given device
         DialNode.__init__(self, vrpnClient, device)
         # Create a unique name for this dial object
-        self.name = 'DirectDials-' + repr(DirectDials.dialCount)
+        self.name = f'DirectDials-{repr(DirectDials.dialCount)}'
 
         # Attach node to data graph
         try:
@@ -265,7 +262,7 @@ class DirectDials(DialNode, DirectObject):
         return self.nodePath
 
     def __repr__(self):
-        string = self.name + ': '
+        string = f'{self.name}: '
         for i in range(self.getNumDials()):
             string = string + '%.3f' % self[i] + ' '
         return string
@@ -324,5 +321,4 @@ class DirectTimecodeReader(AnalogNode, DirectObject):
                 self.totalSeconds)
 
     def __repr__(self):
-        string = ('%s: %d:%d:%d:%d' % ((self.name,) + self.getTime()[:-1]))
-        return string
+        return ('%s: %d:%d:%d:%d' % ((self.name,) + self.getTime()[:-1]))

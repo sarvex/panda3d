@@ -19,14 +19,12 @@ def getTkColorString(color):
     """
     def toHex(intVal):
         val = int(intVal)
-        if val < 16:
-            return "0" + hex(val)[2:]
-        else:
-            return hex(val)[2:]
+        return f"0{hex(val)[2:]}" if val < 16 else hex(val)[2:]
+
     r = toHex(color[0])
     g = toHex(color[1])
     b = toHex(color[2])
-    return "#" + r + g + b
+    return f"#{r}{g}{b}"
 
 ## Background Color ##
 def lerpBackgroundColor(r, g, b, duration):
@@ -70,14 +68,11 @@ def getFileData(filename, separator = ','):
     empty lines.  Return file as list of lists, one file line per element,
     list elements based upon separator
     """
-    f = open(filename.toOsSpecific(), 'r')
-    rawData = f.readlines()
-    f.close()
+    with open(filename.toOsSpecific(), 'r') as f:
+        rawData = f.readlines()
     fileData = []
     for line in rawData:
-        # First strip whitespace from both ends of line
-        l = line.strip()
-        if l:
+        if l := line.strip():
             # If its a valid line, split on separator and
             # strip leading/trailing whitespace from each element
             data = [s.strip() for s in l.split(separator)]

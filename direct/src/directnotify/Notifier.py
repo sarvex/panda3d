@@ -36,11 +36,7 @@ class Notifier:
         """
         self.__name = name
 
-        if logger is None:
-            self.__logger = defaultLogger
-        else:
-            self.__logger = logger
-
+        self.__logger = defaultLogger if logger is None else logger
         # Global default levels are initialized here
         self.__info = 1
         self.__warning = 1
@@ -63,7 +59,9 @@ class Notifier:
         # from Python-level notify messages.
         NotifyCategory.setServerDelta(self.serverDelta)
 
-        self.info("Notify clock adjusted by %s (and timezone adjusted by %s hours) to synchronize with server." % (PythonUtil.formatElapsedSeconds(delta), (time.timezone - timezone) / 3600))
+        self.info(
+            f"Notify clock adjusted by {PythonUtil.formatElapsedSeconds(delta)} (and timezone adjusted by {(time.timezone - timezone) / 3600} hours) to synchronize with server."
+        )
 
     def getTime(self):
         """
@@ -268,7 +266,7 @@ class Notifier:
                     stateObj = fsm.getCurrentState()
                     if stateObj is not None:
                         #state = "%s=%s"%(fsmMemberName, stateObj.getName())
-                        state = "%s, %s"%(state, stateObj.getName())
+                        state = f"{state}, {stateObj.getName()}"
 
                 if hasattr(obj, 'doId'):
                     doId = f" doId:{obj.doId}"

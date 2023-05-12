@@ -47,7 +47,7 @@ class DistributedLargeBlobSender(DistributedObject.DistributedObject):
             self.privOnBlobComplete()
 
     def setFilename(self, filename):
-        DistributedLargeBlobSender.notify.debug('setFilename: %s' % filename)
+        DistributedLargeBlobSender.notify.debug(f'setFilename: {filename}')
         assert self.useDisk
 
         import os
@@ -56,11 +56,9 @@ class DistributedLargeBlobSender(DistributedObject.DistributedObject):
         try:
             os.chdir(bPath)
         except OSError:
-            DistributedLargeBlobSender.notify.error(
-                'could not access %s' % bPath)
-        f = open(filename, 'rb')
-        self.blob = f.read()
-        f.close()
+            DistributedLargeBlobSender.notify.error(f'could not access {bPath}')
+        with open(filename, 'rb') as f:
+            self.blob = f.read()
         os.unlink(filename)
         os.chdir(origDir)
 

@@ -64,14 +64,8 @@ class seLight(NodePath):
         # Attach node to self
         self.LightNode=parent.attachNewNode(light)
         self.LightNode.setTag("Metadata",tag)
-        if(self.type=='spot'):
-            self.LightNode.setHpr(self.orientation)
-            self.LightNode.setPos(self.position)
-        else:
-            self.LightNode.setHpr(self.orientation)
-            self.LightNode.setPos(self.position)
-
-
+        self.LightNode.setHpr(self.orientation)
+        self.LightNode.setPos(self.position)
         self.assign(self.LightNode)
         if(self.type=='spot'):
             self.helpModel = loader.loadModel( "models/misc/Spotlight" )
@@ -84,7 +78,7 @@ class seLight(NodePath):
         self.helpModel.setColor(self.lightcolor)
         self.helpModel.reparentTo(self)
         DirectUtil.useDirectRenderStyle(self.helpModel)
-        if not ((self.type == 'directional')or(self.type == 'point')or(self.type == 'spot')):
+        if self.type not in ['directional', 'point', 'spot']:
             self.helpModel.hide()
 
     def getLight(self):
@@ -139,7 +133,7 @@ class seLight(NodePath):
         #################################################################
         self.light.setColor(color)
         self.lightcolor = color
-        if (self.type == 'directional')or(self.type == 'point'):
+        if self.type in ['directional', 'point']:
             self.helpModel.setColor(self.lightcolor)
         return
 
@@ -338,41 +332,41 @@ class seLightManager(NodePath):
 
         if type == 'ambient':
             self.ambientCount += 1
-            if(name=='DEFAULT_NAME'):
-                light = AmbientLight('ambient_' + repr(self.ambientCount))
-            else:
-                light = AmbientLight(name)
-
+            light = (
+                AmbientLight(f'ambient_{repr(self.ambientCount)}')
+                if (name == 'DEFAULT_NAME')
+                else AmbientLight(name)
+            )
             light.setColor(lightcolor)
 
         elif type == 'directional':
             self.directionalCount += 1
-            if(name=='DEFAULT_NAME'):
-                light = DirectionalLight('directional_' + repr(self.directionalCount))
-            else:
-                light = DirectionalLight(name)
-
+            light = (
+                DirectionalLight(f'directional_{repr(self.directionalCount)}')
+                if (name == 'DEFAULT_NAME')
+                else DirectionalLight(name)
+            )
             light.setColor(lightcolor)
             light.setSpecularColor(specularColor)
 
         elif type == 'point':
             self.pointCount += 1
-            if(name=='DEFAULT_NAME'):
-                light = PointLight('point_' + repr(self.pointCount))
-            else:
-                light = PointLight(name)
-
+            light = (
+                PointLight(f'point_{repr(self.pointCount)}')
+                if (name == 'DEFAULT_NAME')
+                else PointLight(name)
+            )
             light.setColor(lightcolor)
             light.setSpecularColor(specularColor)
             light.setAttenuation(Vec3(constant, linear, quadratic))
 
         elif type == 'spot':
             self.spotCount += 1
-            if(name=='DEFAULT_NAME'):
-                light = Spotlight('spot_' + repr(self.spotCount))
-            else:
-                light = Spotlight(name)
-
+            light = (
+                Spotlight(f'spot_{repr(self.spotCount)}')
+                if (name == 'DEFAULT_NAME')
+                else Spotlight(name)
+            )
             light.setColor(lightcolor)
             lence = PerspectiveLens()
             light.setLens(lence)
@@ -524,14 +518,7 @@ class seLightManager(NodePath):
             print('----Light Mnager: No such Light!')
 
     def getLightNodeList(self):
-        #################################################################
-        # getLightNodeList(self)
-        # Return a list which contains all seLight nodes
-        #################################################################
-        list = []
-        for name in self.lightDict:
-            list.append(self.lightDict[name])
-        return list
+        return [self.lightDict[name] for name in self.lightDict]
 
     def getLightNodeDict(self):
         #################################################################
@@ -547,14 +534,7 @@ class seLightManager(NodePath):
         return self.lightDict
 
     def getLightList(self):
-        #################################################################
-        # getLightList(self)
-        # Return a list which contains names of all lights.
-        #################################################################
-        list = []
-        for name in self.lightDict:
-            list.append(name)
-        return list
+        return list(self.lightDict)
 
     def getLightNode(self,lightName):
         #################################################################

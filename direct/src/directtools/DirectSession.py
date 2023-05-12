@@ -130,7 +130,7 @@ class DirectSession(DirectObject):
                 # parse string into format device:N where N is the sensor name
                 fastrak = fastrak.split()
                 for i in range(len(fastrak))[1:]:
-                    self.fastrak.append(DirectFastrak.DirectFastrak(fastrak[0] + ':' + fastrak[i]))
+                    self.fastrak.append(DirectFastrak.DirectFastrak(f'{fastrak[0]}:{fastrak[i]}'))
 
         self.fControl = 0
         self.fAlt = 0
@@ -215,10 +215,10 @@ class DirectSession(DirectObject):
         self.specialKeys = ['escape', 'delete', 'page_up', 'page_down', 'enter']
 
         def addCtrl(a):
-            return "control-%s"%a
+            return f"control-{a}"
 
         def addShift(a):
-            return "shift-%s"%a
+            return f"shift-{a}"
 
         self.keyEvents = keyList[:]
         self.keyEvents.extend(list(map(addCtrl, keyList)))
@@ -418,7 +418,6 @@ class DirectSession(DirectObject):
                 other = base.direct.cameraControl.camManipRef,
                 blendType = 'easeInOut')
             ival = Sequence(ival, Func(self.endOOBE), name = 'oobeTransition')
-            ival.start()
         else:
             # Place camera marker at true camera location
             self.oobeVis.reparentTo(self.trueCamera)
@@ -440,7 +439,8 @@ class DirectSession(DirectObject):
                 other = base.direct.cameraControl.camManipRef,
                 blendType = 'easeInOut')
             ival = Sequence(ival, Func(self.beginOOBE), name = 'oobeTransition')
-            ival.start()
+
+        ival.start()
 
     def beginOOBE(self):
         # Make sure we've reached our final destination
@@ -499,72 +499,76 @@ class DirectSession(DirectObject):
             self.ignore(event)
 
     def inputHandler(self, input):
-        if not hasattr(self, 'oobeMode') or self.oobeMode == 0:
-            # [gjeon] change current camera dr, iRay, mouseWatcher accordingly to support multiple windows
-            if base.direct.manipulationControl.fMultiView:
+        if (
+            not hasattr(self, 'oobeMode') or self.oobeMode == 0
+        ) and base.direct.manipulationControl.fMultiView:
                 # handling orphan events
-                if self.fMouse1 and 'mouse1' not in input or\
-                   self.fMouse2 and 'mouse2' not in input or\
-                   self.fMouse3 and 'mouse3' not in input:
-                    if input.endswith('-up') or\
-                       input not in self.modifierEvents:
-                        # to handle orphan events
-                        return
+            if (
+                self.fMouse1
+                and 'mouse1' not in input
+                or self.fMouse2
+                and 'mouse2' not in input
+                or self.fMouse3
+                and 'mouse3' not in input
+            ) and (input.endswith('-up') or input not in self.modifierEvents):
+                # to handle orphan events
+                return
 
-                if (self.fMouse1 == 0 and 'mouse1-up' in input) or\
+            if (self.fMouse1 == 0 and 'mouse1-up' in input) or\
                    (self.fMouse2 == 0 and 'mouse2-up' in input) or\
                    (self.fMouse3 == 0 and 'mouse3-up' in input):
-                    # to handle orphan events
-                    return
+                # to handle orphan events
+                return
 
-                if (self.fMouse1 or self.fMouse2 or self.fMouse3) and\
+            if (self.fMouse1 or self.fMouse2 or self.fMouse3) and\
                    input[4:7] != base.direct.camera.getName()[:3] and\
                    input.endswith('-up'):
-                    # to handle orphan events
-                    return
+                # to handle orphan events
+                return
 
-                winCtrl = None
-                possibleWinCtrls = []
-                for cWinCtrl in base.winControls:
-                    if cWinCtrl.mouseWatcher.node().hasMouse():
-                        possibleWinCtrls.append(cWinCtrl)
+            winCtrl = None
+            possibleWinCtrls = [
+                cWinCtrl
+                for cWinCtrl in base.winControls
+                if cWinCtrl.mouseWatcher.node().hasMouse()
+            ]
+            if len(possibleWinCtrls) == 1:
+                winCtrl = possibleWinCtrls[0]
+            elif len(possibleWinCtrls) > 1:
+                for cWinCtrl in possibleWinCtrls:
+                    if (
+                        input.endswith('-up')
+                        and input not in self.modifierEvents
+                        and input not in self.mouseEvents
+                        or input in self.mouseEvents
+                    ):
+                        if input[4:7] == cWinCtrl.camera.getName()[:3]:
+                            winCtrl = cWinCtrl
+                    elif input[4:7] != cWinCtrl.camera.getName()[:3]:
+                        winCtrl = cWinCtrl
+            if winCtrl is None:
+                return
+            if input not in self.modifierEvents:
+                self.win = winCtrl.win
+                self.camera = winCtrl.camera
+                self.trueCamera = self.camera
+                self.cam = NodePath(winCtrl.camNode)
+                self.camNode = winCtrl.camNode
+                if hasattr(winCtrl, 'grid'):
+                    base.direct.grid = winCtrl.grid
+                base.direct.dr = base.direct.drList[base.camList.index(NodePath(winCtrl.camNode))]
+                base.direct.iRay = base.direct.dr.iRay
+                base.mouseWatcher = winCtrl.mouseWatcher
+                base.mouseWatcherNode = winCtrl.mouseWatcher.node()
+                base.direct.dr.mouseUpdate()
+                DG.LE_showInOneCam(self.selectedNPReadout, self.camera.getName())
+                base.direct.widget = base.direct.manipulationControl.widgetList[base.camList.index(NodePath(winCtrl.camNode))]
 
-                if len(possibleWinCtrls) == 1:
-                    winCtrl = possibleWinCtrls[0]
-                elif len(possibleWinCtrls) > 1:
-                    for cWinCtrl in possibleWinCtrls:
-                        if (input.endswith('-up') and\
-                            not input in self.modifierEvents and\
-                            not input in self.mouseEvents) or\
-                           (input in self.mouseEvents):
-                            if input[4:7] == cWinCtrl.camera.getName()[:3]:
-                                winCtrl = cWinCtrl
-                        else:
-                            if input[4:7] != cWinCtrl.camera.getName()[:3]:
-                                winCtrl = cWinCtrl
-                if winCtrl is None:
-                    return
-                if input not in self.modifierEvents:
-                    self.win = winCtrl.win
-                    self.camera = winCtrl.camera
-                    self.trueCamera = self.camera
-                    self.cam = NodePath(winCtrl.camNode)
-                    self.camNode = winCtrl.camNode
-                    if hasattr(winCtrl, 'grid'):
-                        base.direct.grid = winCtrl.grid
-                    base.direct.dr = base.direct.drList[base.camList.index(NodePath(winCtrl.camNode))]
-                    base.direct.iRay = base.direct.dr.iRay
-                    base.mouseWatcher = winCtrl.mouseWatcher
-                    base.mouseWatcherNode = winCtrl.mouseWatcher.node()
-                    base.direct.dr.mouseUpdate()
-                    DG.LE_showInOneCam(self.selectedNPReadout, self.camera.getName())
-                    base.direct.widget = base.direct.manipulationControl.widgetList[base.camList.index(NodePath(winCtrl.camNode))]
-
-                input = input[8:] # get rid of camera prefix
-                if self.fAlt and 'alt' not in input and not input.endswith('-up'):
-                    input = 'alt-' + input
-                if input.endswith('-repeat'):
-                    input = input[:-7]
+            input = input[8:] # get rid of camera prefix
+            if self.fAlt and 'alt' not in input and not input.endswith('-up'):
+                input = f'alt-{input}'
+            if input.endswith('-repeat'):
+                input = input[:-7]
 
         # Deal with keyboard and mouse input
         if input in self.hotKeyMap:
@@ -632,9 +636,8 @@ class DirectSession(DirectObject):
             self.fAlt = 0
 
         #Pass along certain events if this display is a cluster client
-        if self.clusterMode == 'client':
-            if input in self.passThroughKeys:
-                self.cluster('messenger.send("%s")' % input, 0)
+        if self.clusterMode == 'client' and input in self.passThroughKeys:
+            self.cluster(f'messenger.send("{input}")', 0)
 
     def doSetActiveParent(self):
         if self.selected.last:
@@ -681,8 +684,7 @@ class DirectSession(DirectObject):
 
     def widgetResizeTask(self, state):
         if not taskMgr.hasTaskNamed('resizeObjectHandles'):
-            dnp = self.selected.last
-            if dnp:
+            if dnp := self.selected.last:
                 direct = base.direct
 
                 if self.manipulationControl.fMultiView:
@@ -706,53 +708,49 @@ class DirectSession(DirectObject):
 
     def selectCB(self, nodePath, fMultiSelect = 0,
                fSelectTag = 1, fResetAncestry = 1, fLEPane = 0, fUndo=1):
-        dnp = self.selected.select(nodePath, fMultiSelect, fSelectTag)
-        if dnp:
-            messenger.send('DIRECT_preSelectNodePath', [dnp])
-            if fResetAncestry:
-                # Update ancestry
-                self.ancestry = dnp.getAncestors()
-                self.ancestryIndex = 0
-            # Update the selectedNPReadout
-            self.selectedNPReadout.reparentTo(base.a2dBottomLeft)
-            self.selectedNPReadout.setText(
-                'Selected:' + dnp.getName())
-            # Show the manipulation widget
+        if not (dnp := self.selected.select(nodePath, fMultiSelect, fSelectTag)):
+            return
+        messenger.send('DIRECT_preSelectNodePath', [dnp])
+        if fResetAncestry:
+            # Update ancestry
+            self.ancestry = dnp.getAncestors()
+            self.ancestryIndex = 0
+        # Update the selectedNPReadout
+        self.selectedNPReadout.reparentTo(base.a2dBottomLeft)
+        self.selectedNPReadout.setText(f'Selected:{dnp.getName()}')
+        # Show the manipulation widget
+        if self.manipulationControl.fMultiView:
+            for widget in self.manipulationControl.widgetList:
+                widget.showWidget()
+        else:
+            self.widget.showWidget()
+        editTypes = self.manipulationControl.getEditTypes([dnp])
+        if (editTypes & DG.EDIT_TYPE_UNEDITABLE) == DG.EDIT_TYPE_UNEDITABLE:
+            self.manipulationControl.disableWidgetMove()
+        else:
+            self.manipulationControl.enableWidgetMove()
+        # Update camera controls coa to this point
+        # Coa2Camera = Coa2Dnp * Dnp2Camera
+        mCoa2Camera = dnp.mCoa2Dnp * dnp.getMat(self.camera)
+        row = mCoa2Camera.getRow(3)
+        coa = Vec3(row[0], row[1], row[2])
+        self.cameraControl.updateCoa(coa)
+        if not self.fScaleWidgetByCam:
             if self.manipulationControl.fMultiView:
                 for widget in self.manipulationControl.widgetList:
-                    widget.showWidget()
+                    widget.setScalingFactor(dnp.getRadius())
             else:
-                self.widget.showWidget()
-            editTypes = self.manipulationControl.getEditTypes([dnp])
-            if (editTypes & DG.EDIT_TYPE_UNEDITABLE) == DG.EDIT_TYPE_UNEDITABLE:
-                self.manipulationControl.disableWidgetMove()
-            else:
-                self.manipulationControl.enableWidgetMove()
-            # Update camera controls coa to this point
-            # Coa2Camera = Coa2Dnp * Dnp2Camera
-            mCoa2Camera = dnp.mCoa2Dnp * dnp.getMat(self.camera)
-            row = mCoa2Camera.getRow(3)
-            coa = Vec3(row[0], row[1], row[2])
-            self.cameraControl.updateCoa(coa)
-            # Adjust widgets size
-            # This uses the additional scaling factor used to grow and
-            # shrink the widget
-            if not self.fScaleWidgetByCam: # [gjeon] for not scaling widget by distance from camera
-                if self.manipulationControl.fMultiView:
-                    for widget in self.manipulationControl.widgetList:
-                        widget.setScalingFactor(dnp.getRadius())
-                else:
-                    self.widget.setScalingFactor(dnp.getRadius())
+                self.widget.setScalingFactor(dnp.getRadius())
 
-            # Spawn task to have object handles follow the selected object
-            taskMgr.remove('followSelectedNodePath')
-            t = Task.Task(self.followSelectedNodePathTask)
-            t.dnp = dnp
-            taskMgr.add(t, 'followSelectedNodePath')
-            # Send an message marking the event
-            messenger.send('DIRECT_selectedNodePath', [dnp])
-            messenger.send('DIRECT_selectedNodePath_fMulti_fTag', [dnp, fMultiSelect, fSelectTag])
-            messenger.send('DIRECT_selectedNodePath_fMulti_fTag_fLEPane', [dnp, fMultiSelect, fSelectTag, fLEPane])
+        # Spawn task to have object handles follow the selected object
+        taskMgr.remove('followSelectedNodePath')
+        t = Task.Task(self.followSelectedNodePathTask)
+        t.dnp = dnp
+        taskMgr.add(t, 'followSelectedNodePath')
+        # Send an message marking the event
+        messenger.send('DIRECT_selectedNodePath', [dnp])
+        messenger.send('DIRECT_selectedNodePath_fMulti_fTag', [dnp, fMultiSelect, fSelectTag])
+        messenger.send('DIRECT_selectedNodePath_fMulti_fTag_fLEPane', [dnp, fMultiSelect, fSelectTag, fLEPane])
 
     def followSelectedNodePathTask(self, state):
         mCoa2Render = state.dnp.mCoa2Dnp * state.dnp.getMat(render)
@@ -763,8 +761,7 @@ class DirectSession(DirectObject):
         return Task.cont
 
     def deselect(self, nodePath):
-        dnp = self.selected.deselect(nodePath)
-        if dnp:
+        if dnp := self.selected.deselect(nodePath):
             # Hide the manipulation widget
             if self.manipulationControl.fMultiView:
                 for widget in self.manipulationControl.widgetList:
@@ -800,7 +797,8 @@ class DirectSession(DirectObject):
         # Update the activeParentReadout
         self.activeParentReadout.reparentTo(base.a2dBottomLeft)
         self.activeParentReadout.setText(
-            'Active Reparent Target:' + nodePath.getName())
+            f'Active Reparent Target:{nodePath.getName()}'
+        )
         # Alert everyone else
         messenger.send('DIRECT_activeParent', [self.activeParent])
 
@@ -933,35 +931,37 @@ class DirectSession(DirectObject):
             self.showAllDescendants(child)
 
     def upAncestry(self):
-        if self.ancestry:
-            l = len(self.ancestry)
-            i = self.ancestryIndex + 1
-            if i < l:
-                np = self.ancestry[i]
-                name = np.getName()
-                if (name != 'render') and (name != 'renderTop'):
-                    self.ancestryIndex = i
-                    self.select(np, 0, 0)
-                    self.flash(np)
+        if not self.ancestry:
+            return
+        l = len(self.ancestry)
+        i = self.ancestryIndex + 1
+        if i < l:
+            np = self.ancestry[i]
+            name = np.getName()
+            if name not in ['render', 'renderTop']:
+                self.ancestryIndex = i
+                self.select(np, 0, 0)
+                self.flash(np)
 
     def downAncestry(self):
-        if self.ancestry:
-            l = len(self.ancestry)
-            i = self.ancestryIndex - 1
-            if i >= 0:
-                np = self.ancestry[i]
-                name = np.getName()
-                if (name != 'render') and (name != 'renderTop'):
-                    self.ancestryIndex = i
-                    self.select(np, 0, 0)
-                    self.flash(np)
+        if not self.ancestry:
+            return
+        l = len(self.ancestry)
+        i = self.ancestryIndex - 1
+        if i >= 0:
+            np = self.ancestry[i]
+            name = np.getName()
+            if name not in ['render', 'renderTop']:
+                self.ancestryIndex = i
+                self.select(np, 0, 0)
+                self.flash(np)
 
     def getAndSetName(self, nodePath):
         """ Prompt user for new node path name """
         from tkinter.simpledialog import askstring
-        newName = askstring('Node Path: ' + nodePath.getName(),
-                            'Enter new name:')
-        if newName:
+        if newName := askstring(
+            f'Node Path: {nodePath.getName()}', 'Enter new name:'
+        ):
             nodePath.setName(newName)
             messenger.send('DIRECT_nodePathSetName', [nodePath, newName])
 
@@ -1137,16 +1137,10 @@ class DisplayRegionContext(DirectObject):
 
     # The following take into consideration sideways displays
     def getHfov(self):
-        if self.isSideways:
-            return self.camLens.getVfov()
-        else:
-            return self.camLens.getHfov()
+        return self.camLens.getVfov() if self.isSideways else self.camLens.getHfov()
 
     def getVfov(self):
-        if self.isSideways:
-            return self.camLens.getHfov()
-        else:
-            return self.camLens.getVfov()
+        return self.camLens.getHfov() if self.isSideways else self.camLens.getVfov()
 
     def setHfov(self, hfov):
         if self.isSideways:
@@ -1168,17 +1162,11 @@ class DisplayRegionContext(DirectObject):
 
     def getWidth(self):
         prop = base.direct.win.getProperties()
-        if prop.hasSize():
-            return prop.getXSize()
-        else:
-            return 640
+        return prop.getXSize() if prop.hasSize() else 640
 
     def getHeight(self):
         prop = base.direct.win.getProperties()
-        if prop.hasSize():
-            return prop.getYSize()
-        else:
-            return 480
+        return prop.getYSize() if prop.hasSize() else 480
 
     def updateFilmSize(self, width, height):
         if self.camLens.__class__.__name__ == "OrthographicLens":

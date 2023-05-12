@@ -93,14 +93,13 @@ class DirectCameraControl(DirectObject):
             # Start manipulation
             self.spawnXZTranslateOrHPanYZoom()
             # END MOUSE IN CENTRAL REGION
-        else:
-            if ((abs(SEditor.dr.mouseX) > 0.9) and
+        elif ((abs(SEditor.dr.mouseX) > 0.9) and
                 (abs(SEditor.dr.mouseY) > 0.9)):
-                # Mouse is in corners, spawn roll task
-                self.spawnMouseRollTask()
-            else:
-                # Mouse is in outer frame, spawn mouseRotateTask
-                self.spawnMouseRotateTask()
+            # Mouse is in corners, spawn roll task
+            self.spawnMouseRollTask()
+        else:
+            # Mouse is in outer frame, spawn mouseRotateTask
+            self.spawnMouseRotateTask()
 
     def mouseFlyStop(self):
         taskMgr.remove('manipulateCamera')
@@ -122,8 +121,10 @@ class DirectCameraControl(DirectObject):
             self.coaMarkerRef.iPosHprScale(base.cam)
             # Record entries
             self.cqEntries = []
-            for i in range(SEditor.iRay.getNumEntries()):
-                self.cqEntries.append(SEditor.iRay.getEntry(i))
+            self.cqEntries.extend(
+                SEditor.iRay.getEntry(i)
+                for i in range(SEditor.iRay.getNumEntries())
+            )
         # Show the marker
         self.coaMarker.show()
         # Resize it
@@ -172,12 +173,7 @@ class DirectCameraControl(DirectObject):
             return self.HPanYZoomTask(state)
 
     def XZTranslateOrHPPanTask(self, state):
-        if SEditor.fShift:
-            # Panning action
-            return self.HPPanTask(state)
-        else:
-            # Translation action
-            return self.XZTranslateTask(state)
+        return self.HPPanTask(state) if SEditor.fShift else self.XZTranslateTask(state)
 
     def XZTranslateTask(self,state):
         coaDist = Vec3(self.coaMarker.getPos(SEditor.camera)).length()
@@ -230,10 +226,7 @@ class DirectCameraControl(DirectObject):
         self.camManipRef.setPos(self.coaMarkerPos)
         self.camManipRef.setHpr(SEditor.camera, ZERO_POINT)
         t = Task.Task(self.mouseRotateTask)
-        if abs(SEditor.dr.mouseX) > 0.9:
-            t.constrainedDir = 'y'
-        else:
-            t.constrainedDir = 'x'
+        t.constrainedDir = 'y' if abs(SEditor.dr.mouseX) > 0.9 else 'x'
         taskMgr.add(t, 'manipulateCamera')
 
     def mouseRotateTask(self, state):
@@ -352,7 +345,7 @@ class DirectCameraControl(DirectObject):
             # MRM: Would be nice to be able to control this
             # At least display it
             dist = pow(10.0, self.nullHitPointCount)
-            SEditor.message('COA Distance: ' + repr(dist))
+            SEditor.message(f'COA Distance: {repr(dist)}')
             coa.set(0,dist,0)
         # Compute COA Dist
         coaDist = Vec3(coa - ZERO_POINT).length()
@@ -367,7 +360,7 @@ class DirectCameraControl(DirectObject):
         if not coaDist:
             coaDist = Vec3(self.coa - ZERO_POINT).length()
         # Place the marker in render space
-        if ref == None:
+        if ref is None:
             # KEH: use the current display region
             # ref = base.cam
             ref = SEditor.drList.getCurrentDr().cam

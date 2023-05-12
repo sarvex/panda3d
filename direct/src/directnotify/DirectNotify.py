@@ -29,7 +29,7 @@ class DirectNotify:
         """
         Print handling routine
         """
-        return "DirectNotify categories: %s" % (self.__categories)
+        return f"DirectNotify categories: {self.__categories}"
 
     #getters and setters
     def getCategories(self):
@@ -65,7 +65,7 @@ class DirectNotify:
         # we're running before ShowBase has finished initializing
         from panda3d.core import ConfigVariableString
 
-        dconfigParam = ("notify-level-" + categoryName)
+        dconfigParam = f"notify-level-{categoryName}"
         cvar = ConfigVariableString(dconfigParam, "")
         level = cvar.getValue()
 
@@ -98,8 +98,9 @@ class DirectNotify:
             category.setInfo(1)
             category.setDebug(1)
         else:
-            print("DirectNotify: unknown notify level: " + str(level)
-                   + " for category: " + str(categoryName))
+            print(
+                f"DirectNotify: unknown notify level: {str(level)} for category: {str(categoryName)}"
+            )
 
     def setDconfigLevels(self):
         for categoryName in self.getCategories():

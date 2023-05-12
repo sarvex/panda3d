@@ -68,8 +68,8 @@ class PhysicsWalker(DirectObject.DirectObject):
     def __init__(self, gravity = -32.1740, standableGround=0.707,
             hardLandingForce=16.0):
         assert self.debugPrint(
-            "PhysicsWalker(gravity=%s, standableGround=%s)"%(
-            gravity, standableGround))
+            f"PhysicsWalker(gravity={gravity}, standableGround={standableGround})"
+        )
         DirectObject.DirectObject.__init__(self)
         self.__gravity=gravity
         self.__standableGround=standableGround
@@ -343,7 +343,7 @@ class PhysicsWalker(DirectObject.DirectObject):
         del self.getAirborneHeight
 
     def setCollisionsActive(self, active = 1):
-        assert self.debugPrint("collisionsActive(active=%s)"%(active,))
+        assert self.debugPrint(f"collisionsActive(active={active})")
         if self.collisionsActive != active:
             self.collisionsActive = active
             if active:
@@ -363,8 +363,8 @@ class PhysicsWalker(DirectObject.DirectObject):
 
     def getCollisionsActive(self):
         assert self.debugPrint(
-            "getCollisionsActive() returning=%s"%(
-            self.collisionsActive,))
+            f"getCollisionsActive() returning={self.collisionsActive}"
+        )
         return self.collisionsActive
 
     def placeOnFloor(self):
@@ -417,11 +417,10 @@ class PhysicsWalker(DirectObject.DirectObject):
         """
         Check on the arrow keys and update the avatar.
         """
-        if __debug__:
-            if self.wantDebugIndicator:
-                onScreenDebug.append("localAvatar pos = %s\n"%(base.localAvatar.getPos().pPrintValues(),))
-                onScreenDebug.append("localAvatar h = % 10.4f\n"%(base.localAvatar.getH(),))
-                onScreenDebug.append("localAvatar anim = %s\n"%(base.localAvatar.animFSM.getCurrentState().getName(),))
+        if __debug__ and self.wantDebugIndicator:
+            onScreenDebug.append("localAvatar pos = %s\n"%(base.localAvatar.getPos().pPrintValues(),))
+            onScreenDebug.append("localAvatar h = % 10.4f\n"%(base.localAvatar.getH(),))
+            onScreenDebug.append("localAvatar anim = %s\n"%(base.localAvatar.animFSM.getCurrentState().getName(),))
         #assert self.debugPrint("handleAvatarControls(task=%s)"%(task,))
         physObject=self.actorNode.getPhysicsObject()
         #rotAvatarToPhys=Mat3.rotateMatNormaxis(-self.avatarNodePath.getH(), Vec3.up())
@@ -488,58 +487,50 @@ class PhysicsWalker(DirectObject.DirectObject):
         #    self.priorParent.setVector(Vec3.zero())
         #    # We must copy the vector to preserve it:
         #    self.__oldPosDelta=Vec3(posDelta)
-        if __debug__:
-            if self.wantDebugIndicator:
-                onScreenDebug.add("posDelta1",
-                    self.avatarNodePath.getPosDelta(render).pPrintValues())
+        if __debug__ and self.wantDebugIndicator:
+            onScreenDebug.add("posDelta1",
+                self.avatarNodePath.getPosDelta(render).pPrintValues())
 
-                #onScreenDebug.add("posDelta3",
-                #    render.getRelativeVector(
-                #        self.avatarNodePath,
-                #        self.avatarNodePath.getPosDelta(render)).pPrintValues())
+            #onScreenDebug.add("posDelta3",
+            #    render.getRelativeVector(
+            #        self.avatarNodePath,
+            #        self.avatarNodePath.getPosDelta(render)).pPrintValues())
 
-                #onScreenDebug.add("gravity",
-                #    self.gravity.getLocalVector().pPrintValues())
-                #onScreenDebug.add("priorParent",
-                #    self.priorParent.getLocalVector().pPrintValues())
-                #onScreenDebug.add("avatarViscosity",
-                #    "% 10.4f"%(self.avatarViscosity.getCoef(),))
-                #
-                #onScreenDebug.add("physObject pos",
-                #    physObject.getPosition().pPrintValues())
-                #onScreenDebug.add("physObject hpr",
-                #    physObject.getOrientation().getHpr().pPrintValues())
-                #onScreenDebug.add("physObject orien",
-                #    physObject.getOrientation().pPrintValues())
+            #onScreenDebug.add("gravity",
+            #    self.gravity.getLocalVector().pPrintValues())
+            #onScreenDebug.add("priorParent",
+            #    self.priorParent.getLocalVector().pPrintValues())
+            #onScreenDebug.add("avatarViscosity",
+            #    "% 10.4f"%(self.avatarViscosity.getCoef(),))
+            #
+            #onScreenDebug.add("physObject pos",
+            #    physObject.getPosition().pPrintValues())
+            #onScreenDebug.add("physObject hpr",
+            #    physObject.getOrientation().getHpr().pPrintValues())
+            #onScreenDebug.add("physObject orien",
+            #    physObject.getOrientation().pPrintValues())
 
-                onScreenDebug.add("physObject vel",
-                    physObject.getVelocity().pPrintValues())
-                onScreenDebug.add("physObject len",
-                    "% 10.4f"%physObject.getVelocity().length())
+            onScreenDebug.add("physObject vel",
+                physObject.getVelocity().pPrintValues())
+            onScreenDebug.add("physObject len",
+                "% 10.4f"%physObject.getVelocity().length())
 
-                #onScreenDebug.add("posDelta4",
-                #    self.priorParentNp.getRelativeVector(
-                #        render,
-                #        self.avatarNodePath.getPosDelta(render)).pPrintValues())
+            #onScreenDebug.add("posDelta4",
+            #    self.priorParentNp.getRelativeVector(
+            #        render,
+            #        self.avatarNodePath.getPosDelta(render)).pPrintValues())
 
-                onScreenDebug.add("priorParent",
-                    self.priorParent.getLocalVector().pPrintValues())
+            onScreenDebug.add("priorParent",
+                self.priorParent.getLocalVector().pPrintValues())
 
-                #onScreenDebug.add("priorParent po",
-                #    self.priorParent.getVector(physObject).pPrintValues())
+            #onScreenDebug.add("priorParent po",
+            #    self.priorParent.getVector(physObject).pPrintValues())
 
-                #onScreenDebug.add("__posDelta",
-                #    self.__oldPosDelta.pPrintValues())
+            #onScreenDebug.add("__posDelta",
+            #    self.__oldPosDelta.pPrintValues())
 
-                onScreenDebug.add("contact",
-                    contact.pPrintValues())
-                #onScreenDebug.add("airborneHeight", "% 10.4f"%(
-                #    self.getAirborneHeight(),))
-
-                #onScreenDebug.add("__oldContact",
-                #    contact.pPrintValues())
-                #onScreenDebug.add("__oldAirborneHeight", "% 10.4f"%(
-                #    self.getAirborneHeight(),))
+            onScreenDebug.add("contact",
+                contact.pPrintValues())
         airborneHeight = self.getAirborneHeight()
         if airborneHeight > self.highMark:
             self.highMark = airborneHeight
@@ -551,38 +542,35 @@ class PhysicsWalker(DirectObject.DirectObject):
                 ): # Check stair angles before changing this.
             # ...the avatar is airborne (maybe a lot or a tiny amount).
             self.isAirborne = 1
-        else:
-            # ...the avatar is very close to the ground (close enough to be
-            # considered on the ground).
-            if self.isAirborne and physObject.getVelocity().getZ() <= 0.0:
-                # ...the avatar has landed.
-                contactLength = contact.length()
-                if contactLength>self.__hardLandingForce:
-                    #print "jumpHardLand"
-                    messenger.send("jumpHardLand")
-                else:
-                    #print "jumpLand"
-                    messenger.send("jumpLand")
-                self.priorParent.setVector(Vec3.zero())
-                self.isAirborne = 0
-            elif jump:
-                #print "jump"
-                #self.__jumpButton = 0
-                messenger.send("jumpStart")
-
-                ## ...jump away from walls and with with the slope normal.
-                #jumpVec=Vec3(contact+Vec3.up())
-                ##jumpVec=Vec3(rotAvatarToPhys.xform(jumpVec))
-                #jumpVec.normalize()
-
-                # ...jump straight up, even if next to a wall.
-                jumpVec=Vec3.up()
-
-                jumpVec *= self.avatarControlJumpForce
-                physObject.addImpulse(Vec3(jumpVec))
-                self.isAirborne = 1 # Avoid double impulse before fully airborne.
+        elif self.isAirborne and physObject.getVelocity().getZ() <= 0.0:
+            # ...the avatar has landed.
+            contactLength = contact.length()
+            if contactLength>self.__hardLandingForce:
+                #print "jumpHardLand"
+                messenger.send("jumpHardLand")
             else:
-                self.isAirborne = 0
+                #print "jumpLand"
+                messenger.send("jumpLand")
+            self.priorParent.setVector(Vec3.zero())
+            self.isAirborne = 0
+        elif jump:
+            #print "jump"
+            #self.__jumpButton = 0
+            messenger.send("jumpStart")
+
+            ## ...jump away from walls and with with the slope normal.
+            #jumpVec=Vec3(contact+Vec3.up())
+            ##jumpVec=Vec3(rotAvatarToPhys.xform(jumpVec))
+            #jumpVec.normalize()
+
+            # ...jump straight up, even if next to a wall.
+            jumpVec=Vec3.up()
+
+            jumpVec *= self.avatarControlJumpForce
+            physObject.addImpulse(Vec3(jumpVec))
+            self.isAirborne = 1 # Avoid double impulse before fully airborne.
+        else:
+            self.isAirborne = 0
         if __debug__:
             onScreenDebug.add("isAirborne", "%d"%(self.isAirborne,))
 
@@ -654,19 +642,18 @@ class PhysicsWalker(DirectObject.DirectObject):
     def setPriorParentVector(self):
         assert self.debugPrint("doDeltaPos()")
 
-        print("self.__oldDt %s self.__oldPosDelta %s" % (self.__oldDt, self.__oldPosDelta))
+        print(f"self.__oldDt {self.__oldDt} self.__oldPosDelta {self.__oldPosDelta}")
         if __debug__:
             onScreenDebug.add("__oldDt", "% 10.4f"%self.__oldDt)
             onScreenDebug.add("self.__oldPosDelta",
                               self.__oldPosDelta.pPrintValues())
 
         velocity = self.__oldPosDelta*(1/self.__oldDt)*4.0 # *4.0 is a hack
-        assert self.debugPrint("  __oldPosDelta=%s"%(self.__oldPosDelta,))
-        assert self.debugPrint("  velocity=%s"%(velocity,))
+        assert self.debugPrint(f"  __oldPosDelta={self.__oldPosDelta}")
+        assert self.debugPrint(f"  velocity={velocity}")
         self.priorParent.setVector(Vec3(velocity))
-        if __debug__:
-            if self.wantDebugIndicator:
-                onScreenDebug.add("velocity", velocity.pPrintValues())
+        if __debug__ and self.wantDebugIndicator:
+            onScreenDebug.add("velocity", velocity.pPrintValues())
 
     def reset(self):
         assert self.debugPrint("reset()")
@@ -696,23 +683,27 @@ class PhysicsWalker(DirectObject.DirectObject):
             #self.accept("control-f3", self.spawnTest) #*#
             self.accept("f3", self.reset) # for debugging only.
 
-        taskName = "AvatarControls-%s"%(id(self),)
+        taskName = f"AvatarControls-{id(self)}"
         # remove any old
         taskMgr.remove(taskName)
         # spawn the new task
         taskMgr.add(self.handleAvatarControls, taskName, 25)
         if self.physVelocityIndicator:
-            taskMgr.add(self.avatarPhysicsIndicator, "AvatarControlsIndicator%s"%(id(self),), 35)
+            taskMgr.add(
+                self.avatarPhysicsIndicator,
+                f"AvatarControlsIndicator{id(self)}",
+                35,
+            )
 
     def disableAvatarControls(self):
         """
         Ignore the arrow keys, etc.
         """
         assert self.debugPrint("disableAvatarControls()")
-        taskName = "AvatarControls-%s"%(id(self),)
+        taskName = f"AvatarControls-{id(self)}"
         taskMgr.remove(taskName)
 
-        taskName = "AvatarControlsIndicator%s"%(id(self),)
+        taskName = f"AvatarControlsIndicator{id(self)}"
         taskMgr.remove(taskName)
 
         if __debug__:
@@ -733,5 +724,4 @@ class PhysicsWalker(DirectObject.DirectObject):
 
         def debugPrint(self, message):
             """for debugging"""
-            return self.notify.debug(
-                    str(id(self))+' '+message)
+            return self.notify.debug(f'{id(self)} {message}')

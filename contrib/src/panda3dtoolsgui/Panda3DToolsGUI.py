@@ -187,18 +187,17 @@ class OutputDialogpview(wx.Dialog):
     def RunPview(self,e):#pview function
         filename = self.pview_modelFile.GetValue()
         anim_filename = self.pview_animFile.GetValue()
-        args = {}
-        args['filename'] = str(filename)
-        args['animfilename'] = str(anim_filename)
-
-        if sys.platform == "win32":
-            extension = ".exe"
-        elif sys.platform == "darwin": #OSX
-            extension = ""
-        else: #Linux and UNIX
-            extension = ""
-
-        command = "pview" + extension +  ' ' +  '"' +args['filename'] + '"'+  ' ' +  '"' + args['animfilename'] + '"'
+        args = {'filename': str(filename), 'animfilename': str(anim_filename)}
+        extension = ".exe" if sys.platform == "win32" else ""
+        command = (
+            f'pview{extension} "'
+            + args['filename']
+            + '"'
+            + ' '
+            + '"'
+            + args['animfilename']
+            + '"'
+        )
 
         try:
             p = subprocess.Popen(command, shell = True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines = True )
@@ -1371,8 +1370,11 @@ class main(wx.Frame):
     def OnShowHelp(self,event):#show help files
         def _addBook(filename):
             if not self.help.AddBook(filename):
-                wx.MessageBox("Unable to open: " + filename,
-                              "Error", wx.OK|wx.ICON_EXCLAMATION)
+                wx.MessageBox(
+                    f"Unable to open: {filename}",
+                    "Error",
+                    wx.OK | wx.ICON_EXCLAMATION,
+                )
 
         self.help = wx.html.HtmlHelpController()
 
@@ -1408,8 +1410,7 @@ class main(wx.Frame):
             dlg.Destroy()
             return
 
-        item = {}
-        item['cmd'] = 'maya2egg'+self.simple_mayaVerComboBox.GetStringSelection()
+        item = {'cmd': f'maya2egg{self.simple_mayaVerComboBox.GetStringSelection()}'}
         item['finput'] = str(finput)
         item['foutput'] = str(foutput)
         item['args'] = { 'a' : self.simple_animOptChoice.GetStringSelection() }
@@ -1457,7 +1458,9 @@ class main(wx.Frame):
             self.srcProjectFolder = dlg.GetDirectory()
             self.m2e_mayaFileTxt.SetValue(os.path.join(self.srcProjectFolder + os.sep , filename)) #this is for a text control
         dlg.Destroy() #otherwise just kill the file dialog
-        self.statusBar.SetStatusText("Current Scene File is: " + self.srcProjectFolder + os.sep + filename)
+        self.statusBar.SetStatusText(
+            f"Current Scene File is: {self.srcProjectFolder}{os.sep}{filename}"
+        )
 
     def OnMaya2EggExportDest(self, event):
         #choose output egg for maya2egg
@@ -1476,7 +1479,9 @@ class main(wx.Frame):
         dlg.Destroy() #otherwise just kill the file dialog
         if (self.batchItemNameTxt.GetValue() == '' and len(filename) > 4):
             self.batchItemNameTxt.SetValue(filename[:-4])
-        self.statusBar.SetStatusText("Current Egg File is: " + self.destProjectFolder + os.sep + filename)
+        self.statusBar.SetStatusText(
+            f"Current Egg File is: {self.destProjectFolder}{os.sep}{filename}"
+        )
 
     def OnMaya2EggAnimOpt(self,event):
         #get value from copytexture check box
@@ -1548,11 +1553,11 @@ class main(wx.Frame):
 
     def OnEgg2BamBatchOutput(self, event):
         for eggInfo in self.GetOutputFromBatch():
-            batchItemInfo = {}
-            batchItemInfo['cmd'] = 'egg2bam'
-            batchItemInfo['args'] = self.BuildEgg2BamArgs()
-            batchItemInfo['finput'] = str(eggInfo)
-
+            batchItemInfo = {
+                'cmd': 'egg2bam',
+                'args': self.BuildEgg2BamArgs(),
+                'finput': str(eggInfo),
+            }
             dirname = ''
             for item in eggInfo.split('\\'):
                 dirname += item + "\\"
@@ -1578,17 +1583,24 @@ class main(wx.Frame):
             for filename in filenames:
                 eggInfo = os.path.join(dirname + os.sep , filename)
                 self.rename_eggList.append(eggInfo)
-                self.rename_eggFilesTree.AppendItem(self.rename_eggFilesRoot,str(len(self.rename_eggList)) + ' ' + eggInfo)
+                self.rename_eggFilesTree.AppendItem(
+                    self.rename_eggFilesRoot,
+                    f'{len(self.rename_eggList)} {eggInfo}',
+                )
                 self.rename_eggFilesTree.ExpandAll()
 
         dlg.Destroy() #otherwise just kill the file dialog
-        self.statusBar.SetStatusText("The input egg File is: " + dirname + os.sep + filename)
+        self.statusBar.SetStatusText(
+            f"The input egg File is: {dirname}{os.sep}{filename}"
+        )
         self.OnRenameInPlace(None)
 
     def OnRenameAddFromBatch(self, event):
         for eggInfo in self.GetOutputFromBatch():
             self.rename_eggList.append(eggInfo)
-            self.rename_eggFilesTree.AppendItem(self.rename_eggFilesRoot, str(len(self.rename_eggList)) + ' ' + eggInfo)
+            self.rename_eggFilesTree.AppendItem(
+                self.rename_eggFilesRoot, f'{len(self.rename_eggList)} {eggInfo}'
+            )
             self.rename_eggFilesTree.ExpandAll()
         self.OnRenameInPlace(None)
 
@@ -1615,11 +1627,11 @@ class main(wx.Frame):
         #update the tree display of egg file list in egg-rename panel
         self.rename_eggFilesTree.DeleteAllItems()
         self.rename_eggFilesRoot = self.rename_eggFilesTree.AddRoot('Egg Files')
-        index = 0
-        for item in self.rename_eggList:
-            index += 1
+        for index, item in enumerate(self.rename_eggList, start=1):
             treeitem = item
-            self.rename_eggFilesTree.AppendItem(self.rename_eggFilesRoot, str(index) + ' ' + str(treeitem))
+            self.rename_eggFilesTree.AppendItem(
+                self.rename_eggFilesRoot, f'{str(index)} {str(treeitem)}'
+            )
         self.rename_eggFilesTree.ExpandAll()
         self.OnRenameInPlace(None)
 
@@ -1632,17 +1644,16 @@ class main(wx.Frame):
             self.rename_exportFileTxt.SetValue("")
             self.rename_exportFileTxt.Disable()
             self.rename_exportFileBtn.Disable()
+        elif (len(self.rename_eggList) > 1):
+            self.rename_exportDirTxt.Enable()
+            self.rename_exportDirBtn.Enable()
+            self.rename_exportFileTxt.Disable()
+            self.rename_exportFileBtn.Disable()
         else:
-            if (len(self.rename_eggList) > 1):
-                self.rename_exportDirTxt.Enable()
-                self.rename_exportDirBtn.Enable()
-                self.rename_exportFileTxt.Disable()
-                self.rename_exportFileBtn.Disable()
-            else:
-                self.rename_exportDirTxt.Enable()
-                self.rename_exportDirBtn.Enable()
-                self.rename_exportFileTxt.Enable()
-                self.rename_exportFileBtn.Enable()
+            self.rename_exportDirTxt.Enable()
+            self.rename_exportDirBtn.Enable()
+            self.rename_exportFileTxt.Enable()
+            self.rename_exportFileBtn.Enable()
 
     def OnRenameExportFile(self, event):
         #choose output egg for egg-rename panel
@@ -1686,17 +1697,24 @@ class main(wx.Frame):
             for filename in filenames:
                 eggInfo = os.path.join(dirname + os.sep , filename)
                 self.optchar_eggList.append(eggInfo)
-                self.optchar_eggFilesTree.AppendItem(self.optchar_eggFilesRoot,str(len(self.optchar_eggList)) + ' ' + eggInfo)
+                self.optchar_eggFilesTree.AppendItem(
+                    self.optchar_eggFilesRoot,
+                    f'{len(self.optchar_eggList)} {eggInfo}',
+                )
                 self.optchar_eggFilesTree.ExpandAll()
 
         dlg.Destroy() #otherwise just kill the file dialog
-        self.statusBar.SetStatusText("The input egg File is: " + dirname + os.sep + filename)
+        self.statusBar.SetStatusText(
+            f"The input egg File is: {dirname}{os.sep}{filename}"
+        )
         self.OnOptcharInPlace(None)
 
     def OnOptcharAddFromBatch(self, event):
         for eggInfo in self.GetOutputFromBatch():
             self.optchar_eggList.append(eggInfo)
-            self.optchar_eggFilesTree.AppendItem(self.optchar_eggFilesRoot, str(len(self.optchar_eggList)) + ' ' + eggInfo)
+            self.optchar_eggFilesTree.AppendItem(
+                self.optchar_eggFilesRoot, f'{len(self.optchar_eggList)} {eggInfo}'
+            )
             self.optchar_eggFilesTree.ExpandAll()
         self.OnOptcharInPlace(None)
 
@@ -1723,11 +1741,11 @@ class main(wx.Frame):
         #update the tree display of egg file list in egg-optchar panel
         self.optchar_eggFilesTree.DeleteAllItems()
         self.optchar_eggFilesRoot = self.optchar_eggFilesTree.AddRoot('Egg Files')
-        index = 0
-        for item in self.optchar_eggList:
-            index += 1
+        for index, item in enumerate(self.optchar_eggList, start=1):
             treeitem = item
-            self.optchar_eggFilesTree.AppendItem(self.optchar_eggFilesRoot, str(index) + ' ' + str(treeitem))
+            self.optchar_eggFilesTree.AppendItem(
+                self.optchar_eggFilesRoot, f'{str(index)} {str(treeitem)}'
+            )
         self.optchar_eggFilesTree.ExpandAll()
         self.OnOptcharInPlace(None)
 
@@ -1740,17 +1758,16 @@ class main(wx.Frame):
             self.optchar_exportFileTxt.SetValue("")
             self.optchar_exportFileTxt.Disable()
             self.optchar_exportFileBtn.Disable()
+        elif (len(self.optchar_eggList) > 1):
+            self.optchar_exportDirTxt.Enable()
+            self.optchar_exportDirBtn.Enable()
+            self.optchar_exportFileTxt.Disable()
+            self.optchar_exportFileBtn.Disable()
         else:
-            if (len(self.optchar_eggList) > 1):
-                self.optchar_exportDirTxt.Enable()
-                self.optchar_exportDirBtn.Enable()
-                self.optchar_exportFileTxt.Disable()
-                self.optchar_exportFileBtn.Disable()
-            else:
-                self.optchar_exportDirTxt.Enable()
-                self.optchar_exportDirBtn.Enable()
-                self.optchar_exportFileTxt.Enable()
-                self.optchar_exportFileBtn.Enable()
+            self.optchar_exportDirTxt.Enable()
+            self.optchar_exportDirBtn.Enable()
+            self.optchar_exportFileTxt.Enable()
+            self.optchar_exportFileBtn.Enable()
 
     def OnOptcharExportFile(self, event):
         #choose output egg for egg-optchar panel
@@ -1784,7 +1801,10 @@ class main(wx.Frame):
             for filename in filenames:
                 eggInfo = os.path.join(dirname + os.sep , filename)
                 self.palettize_eggList.append(eggInfo)
-                self.palettize_eggFilesTree.AppendItem(self.palettize_eggFilesRoot,str(len(self.palettize_eggList)) + ' ' + eggInfo)
+                self.palettize_eggFilesTree.AppendItem(
+                    self.palettize_eggFilesRoot,
+                    f'{len(self.palettize_eggList)} {eggInfo}',
+                )
                 self.palettize_eggFilesTree.ExpandAll()
 
         dlg.Destroy() #otherwise just kill the file dialog
@@ -1793,7 +1813,10 @@ class main(wx.Frame):
     def OnPalettizeAddFromBatch(self, event):
         for eggInfo in self.GetOutputFromBatch():
             self.palettize_eggList.append(eggInfo)
-            self.palettize_eggFilesTree.AppendItem(self.palettize_eggFilesRoot, str(len(self.palettize_eggList)) + ' ' + eggInfo)
+            self.palettize_eggFilesTree.AppendItem(
+                self.palettize_eggFilesRoot,
+                f'{len(self.palettize_eggList)} {eggInfo}',
+            )
             self.palettize_eggFilesTree.ExpandAll()
         self.OnPalettizeInPlace(None)
 
@@ -1820,11 +1843,11 @@ class main(wx.Frame):
         #update the output of the selected egg files of multiple eggs panel in egg-palettize panel
         self.palettize_eggFilesTree.DeleteAllItems()
         self.palettize_eggFilesRoot = self.palettize_eggFilesTree.AddRoot('Egg Files')
-        index = 0
-        for item in self.palettize_eggList:
-            index += 1
+        for index, item in enumerate(self.palettize_eggList, start=1):
             treeitem = item
-            self.palettize_eggFilesTree.AppendItem(self.palettize_eggFilesRoot, str(index) + ' ' + str(treeitem))
+            self.palettize_eggFilesTree.AppendItem(
+                self.palettize_eggFilesRoot, f'{str(index)} {str(treeitem)}'
+            )
         self.palettize_eggFilesTree.ExpandAll()
         self.OnPalettizeInPlace(None)
 
@@ -1837,17 +1860,16 @@ class main(wx.Frame):
             self.palettize_exportFileTxt.SetValue("")
             self.palettize_exportFileTxt.Disable()
             self.palettize_exportFileBtn.Disable()
+        elif (len(self.palettize_eggList) > 1):
+            self.palettize_exportDirTxt.Enable()
+            self.palettize_exportDirBtn.Enable()
+            self.palettize_exportFileTxt.Disable()
+            self.palettize_exportFileBtn.Disable()
         else:
-            if (len(self.palettize_eggList) > 1):
-                self.palettize_exportDirTxt.Enable()
-                self.palettize_exportDirBtn.Enable()
-                self.palettize_exportFileTxt.Disable()
-                self.palettize_exportFileBtn.Disable()
-            else:
-                self.palettize_exportDirTxt.Enable()
-                self.palettize_exportDirBtn.Enable()
-                self.palettize_exportFileTxt.Enable()
-                self.palettize_exportFileBtn.Enable()
+            self.palettize_exportDirTxt.Enable()
+            self.palettize_exportDirBtn.Enable()
+            self.palettize_exportFileTxt.Enable()
+            self.palettize_exportFileBtn.Enable()
 
     def OnPalettizeExportFile(self, event):
         #choose output egg for egg-palettize panel
@@ -1881,29 +1903,28 @@ class main(wx.Frame):
             dirname = dlg.GetDirectory()
             try:
                 self.txaExtraLines = []
-                txafile = open((dirname + os.sep + filename), 'r')
-                for line in txafile:
-                    words = line.split()
-                    if len(words):
-                        if words[0] == ':palette':
-                            self.palettize_sizeWidthTxt.SetValue(words[1])
-                            self.palettize_sizeHeightTxt.SetValue(words[2])
-                        elif words[0] == ':imagetype':
-                            self.palettize_imageTypeChoice.SetStringSelection(words[1])
-                        elif words[0] == ':powertwo':
-                            self.palettize_powerOf2Chk.SetValue(int(words[1]))
-                        elif words[0] == ':background':
-                            self.palettize_redTxt.SetValue(int(words[1]))
-                            self.palettize_greenTxt.SetValue(int(words[2]))
-                            self.palettize_blueTxt.SetValue(int(words[3]))
-                            self.palettize_alphaTxt.SetValue(int(words[4]))
-                        elif words[0] == ':margin':
-                            self.palettize_marginTxt.SetValue(int(words[1]))
-                        elif words[0] == ':coverage':
-                            self.palettize_coverageTxt.SetValue(words[1])
-                        else:
-                            self.txaExtraLines.append(line)
-                txafile.close()
+                with open((dirname + os.sep + filename), 'r') as txafile:
+                    for line in txafile:
+                        words = line.split()
+                        if len(words):
+                            if words[0] == ':palette':
+                                self.palettize_sizeWidthTxt.SetValue(words[1])
+                                self.palettize_sizeHeightTxt.SetValue(words[2])
+                            elif words[0] == ':imagetype':
+                                self.palettize_imageTypeChoice.SetStringSelection(words[1])
+                            elif words[0] == ':powertwo':
+                                self.palettize_powerOf2Chk.SetValue(int(words[1]))
+                            elif words[0] == ':background':
+                                self.palettize_redTxt.SetValue(int(words[1]))
+                                self.palettize_greenTxt.SetValue(int(words[2]))
+                                self.palettize_blueTxt.SetValue(int(words[3]))
+                                self.palettize_alphaTxt.SetValue(int(words[4]))
+                            elif words[0] == ':margin':
+                                self.palettize_marginTxt.SetValue(int(words[1]))
+                            elif words[0] == ':coverage':
+                                self.palettize_coverageTxt.SetValue(words[1])
+                            else:
+                                self.txaExtraLines.append(line)
             except:
                 print("Error opening .txa file!")
             self.palettize_saveTxaTxt.SetValue(os.path.join(dirname + os.sep , filename))
